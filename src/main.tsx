@@ -14,7 +14,4 @@ try {
 }
 
 const root = createRoot(document.getElementById("root")!);
-
-// Force rebuild by adding a comment to trigger change detection
-// Rebuild timestamp: ${Date.now()}
 root.render(<App />);

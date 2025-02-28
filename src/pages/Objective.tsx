@@ -14,9 +14,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { KeyResult, Status, ConfidenceLevel } from "@/types";
 
-// Verify DashboardLayout is correctly imported
-console.log("DashboardLayout imported:", DashboardLayout);
-
 const Objective = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();

@@ -6,7 +6,7 @@
 
 import DashboardLayout from "@/layouts/DashboardLayout";
 import ObjectiveList from "@/components/ObjectiveList";
-import { Objective } from "@/pages/Objective";
+import Objective from "@/pages/Objective";
 
 export const validateComponents = () => {
   // Log components to ensure they're accessible
