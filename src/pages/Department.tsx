@@ -3,16 +3,20 @@ import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { getDepartmentById } from "@/data/departments";
-import { departmentStats, getObjectivesByDepartment, users } from "@/data/okrData";
+import { useOKRStore } from "@/data/okrData";
 import ObjectiveList from "@/components/ObjectiveList";
 import ProgressBar from "@/components/ProgressBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, PlusCircle } from "lucide-react";
+import { DepartmentId } from "@/types";
+import { toast } from "sonner";
+import { users } from "@/data/okrData";
 
 const Department = () => {
   const { id } = useParams<{ id: string }>();
   const department = getDepartmentById(id || "");
+  const { objectives, addObjective, getDepartmentStats } = useOKRStore();
   
   useEffect(() => {
     if (department) {
@@ -33,8 +37,15 @@ const Department = () => {
     );
   }
 
-  const stats = departmentStats[id];
-  const objectives = getObjectivesByDepartment(id);
+  // Cast id to DepartmentId to fix TypeScript error
+  const departmentId = id as DepartmentId;
+  const stats = getDepartmentStats(departmentId);
+  const departmentObjectives = objectives.filter(obj => obj.departmentId === departmentId);
+
+  const handleAddObjective = () => {
+    addObjective(departmentId);
+    toast.success("New objective added");
+  };
 
   return (
     <DashboardLayout>
@@ -51,7 +62,12 @@ const Department = () => {
               <h1 className="text-2xl font-bold" style={{ color: department.color }}>
                 {department.name}
               </h1>
-              <Button size="sm" className="bg-deepip-primary text-white hover:bg-deepip-primary/90">
+              <Button 
+                size="sm" 
+                className="bg-deepip-primary text-white hover:bg-deepip-primary/90"
+                onClick={handleAddObjective}
+              >
+                <PlusCircle size={16} className="mr-2" />
                 Add Objective
               </Button>
             </CardTitle>
@@ -108,7 +124,7 @@ const Department = () => {
         </Card>
 
         <div className="mt-8 animate-slide-in">
-          <ObjectiveList objectives={objectives} users={users} />
+          <ObjectiveList objectives={departmentObjectives} users={users} />
         </div>
       </div>
     </DashboardLayout>

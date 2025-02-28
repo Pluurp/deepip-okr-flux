@@ -2,14 +2,68 @@
 import { useEffect } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { departments } from "@/data/departments";
-import { departmentStats, getObjectivesByDepartment, objectives } from "@/data/okrData";
+import { useOKRStore } from "@/data/okrData";
 import DepartmentCard from "@/components/DepartmentCard";
 import { Card, CardContent } from "@/components/ui/card";
+import { DepartmentId } from "@/types";
 
 const Index = () => {
+  const { objectives, getDepartmentStats } = useOKRStore();
+
   useEffect(() => {
     document.title = "OKR Dashboard | DeepIP";
   }, []);
+
+  // Calculate company-wide statistics
+  const getTotalDaysRemaining = () => {
+    // Use leadership department as reference
+    return getDepartmentStats("leadership").daysRemaining;
+  };
+
+  const getTotalDays = () => {
+    // Use leadership department as reference
+    return getDepartmentStats("leadership").totalDays;
+  };
+
+  const getOverallProgress = () => {
+    if (objectives.length === 0) return 0;
+    const sum = objectives.reduce((acc, obj) => acc + obj.progress, 0);
+    return Math.round(sum / objectives.length);
+  };
+
+  const getTimeProgress = () => {
+    // Use leadership department as reference
+    return getDepartmentStats("leadership").timeProgress;
+  };
+
+  // Calculate status percentages
+  const getStatusPercentages = () => {
+    let onTrack = 0;
+    let atRisk = 0;
+    let offTrack = 0;
+    let total = 0;
+
+    objectives.forEach(obj => {
+      obj.keyResults.forEach(kr => {
+        total++;
+        if (kr.status === "On track" || kr.status === "Completed") {
+          onTrack++;
+        } else if (kr.status === "At Risk") {
+          atRisk++;
+        } else if (kr.status === "Off Track") {
+          offTrack++;
+        }
+      });
+    });
+
+    return {
+      onTrack: total ? Math.round((onTrack / total) * 100) : 0,
+      atRisk: total ? Math.round((atRisk / total) * 100) : 0,
+      offTrack: total ? Math.round((offTrack / total) * 100) : 0
+    };
+  };
+
+  const statusPercentages = getStatusPercentages();
 
   return (
     <DashboardLayout>
@@ -27,7 +81,7 @@ const Index = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
           {departments.map((department) => {
-            const deptObjectives = getObjectivesByDepartment(department.id);
+            const deptObjectives = objectives.filter(obj => obj.departmentId === department.id);
             const objectivesSummary = deptObjectives.map((obj) => ({
               title: obj.title,
               progress: obj.progress,
@@ -37,7 +91,7 @@ const Index = () => {
               <DepartmentCard
                 key={department.id}
                 department={department}
-                stats={departmentStats[department.id]}
+                stats={getDepartmentStats(department.id as DepartmentId)}
                 objectives={objectivesSummary}
               />
             );
@@ -55,15 +109,15 @@ const Index = () => {
               <div className="flex gap-6 mt-4 lg:mt-0">
                 <div className="text-center">
                   <p className="text-sm text-gray-500">Days Remaining</p>
-                  <p className="text-xl font-medium">32/89</p>
+                  <p className="text-xl font-medium">{getTotalDaysRemaining()}/{getTotalDays()}</p>
                 </div>
                 <div className="text-center">
                   <p className="text-sm text-gray-500">Time Progress</p>
-                  <p className="text-xl font-medium">64.0%</p>
+                  <p className="text-xl font-medium">{getTimeProgress().toFixed(1)}%</p>
                 </div>
                 <div className="text-center">
                   <p className="text-sm text-gray-500">Progress</p>
-                  <p className="text-xl font-medium">60%</p>
+                  <p className="text-xl font-medium">{getOverallProgress()}%</p>
                 </div>
               </div>
             </div>
@@ -72,27 +126,32 @@ const Index = () => {
               <div>
                 <h3 className="font-medium mb-4">Department Progress</h3>
                 <div className="space-y-4">
-                  {departments.map((dept) => (
-                    <div key={dept.id} className="flex items-center">
-                      <div className="w-32 font-medium truncate" style={{ color: dept.color }}>
-                        {dept.name}
-                      </div>
-                      <div className="flex-1 ml-4">
-                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full rounded-full transition-all duration-1000 ease-out"
-                            style={{ 
-                              width: `${departmentStats[dept.id].overallProgress}%`,
-                              backgroundColor: dept.color
-                            }}
-                          />
+                  {departments.map((dept) => {
+                    const departmentId = dept.id as DepartmentId;
+                    const stats = getDepartmentStats(departmentId);
+                    
+                    return (
+                      <div key={dept.id} className="flex items-center">
+                        <div className="w-32 font-medium truncate" style={{ color: dept.color }}>
+                          {dept.name}
+                        </div>
+                        <div className="flex-1 ml-4">
+                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div 
+                              className="h-full rounded-full transition-all duration-1000 ease-out"
+                              style={{ 
+                                width: `${stats.overallProgress}%`,
+                                backgroundColor: dept.color
+                              }}
+                            />
+                          </div>
+                        </div>
+                        <div className="ml-4 w-12 text-right font-medium">
+                          {stats.overallProgress}%
                         </div>
                       </div>
-                      <div className="ml-4 w-12 text-right font-medium">
-                        {departmentStats[dept.id].overallProgress}%
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
               
@@ -105,15 +164,15 @@ const Index = () => {
                   </Card>
                   <Card className="p-4 border shadow-sm">
                     <p className="text-sm text-gray-500">On Track</p>
-                    <p className="text-2xl font-medium text-green-600">68%</p>
+                    <p className="text-2xl font-medium text-green-600">{statusPercentages.onTrack}%</p>
                   </Card>
                   <Card className="p-4 border shadow-sm">
                     <p className="text-sm text-gray-500">At Risk</p>
-                    <p className="text-2xl font-medium text-yellow-600">22%</p>
+                    <p className="text-2xl font-medium text-yellow-600">{statusPercentages.atRisk}%</p>
                   </Card>
                   <Card className="p-4 border shadow-sm">
                     <p className="text-sm text-gray-500">Off Track</p>
-                    <p className="text-2xl font-medium text-red-600">10%</p>
+                    <p className="text-2xl font-medium text-red-600">{statusPercentages.offTrack}%</p>
                   </Card>
                 </div>
               </div>
