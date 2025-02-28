@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 type EditableSelectProps<T extends string> = {
   value: T;
-  options: T[];
+  options: readonly T[] | T[]; // Support both readonly and mutable arrays
   onChange: (value: T) => void;
   className?: string;
   placeholder?: string;
