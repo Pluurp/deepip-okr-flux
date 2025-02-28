@@ -2,13 +2,13 @@
 import { useEffect } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { departments } from "@/data/departments";
-import { useOKRStore } from "@/data/okrData";
+import { useOKRStore, getDepartmentStats } from "@/data/okrData";
 import DepartmentCard from "@/components/DepartmentCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { DepartmentId } from "@/types";
 
 const Index = () => {
-  const { objectives, getDepartmentStats } = useOKRStore();
+  const { objectives } = useOKRStore();
 
   useEffect(() => {
     document.title = "OKR Dashboard | DeepIP";

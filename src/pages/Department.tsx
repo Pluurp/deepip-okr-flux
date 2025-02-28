@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { getDepartmentById } from "@/data/departments";
-import { useOKRStore } from "@/data/okrData";
+import { useOKRStore, getDepartmentStats, users } from "@/data/okrData";
 import ObjectiveList from "@/components/ObjectiveList";
 import ProgressBar from "@/components/ProgressBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -11,12 +11,11 @@ import { Button } from "@/components/ui/button";
 import { ChevronLeft, PlusCircle } from "lucide-react";
 import { DepartmentId } from "@/types";
 import { toast } from "sonner";
-import { users } from "@/data/okrData";
 
 const Department = () => {
   const { id } = useParams<{ id: string }>();
   const department = getDepartmentById(id || "");
-  const { objectives, addObjective, getDepartmentStats } = useOKRStore();
+  const { objectives, addObjective } = useOKRStore();
   
   useEffect(() => {
     if (department) {
