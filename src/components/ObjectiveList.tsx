@@ -11,6 +11,9 @@ import { PlusCircle, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
+// Console log to verify imports
+console.log("ObjectiveList is loading with all required imports");
+
 type ObjectiveListProps = {
   objectives: Objective[];
   users: User[];
@@ -58,6 +61,9 @@ const ObjectiveList = ({ objectives, users, className }: ObjectiveListProps) => 
     addKeyResult(objectiveId);
     toast.success("New Key Result added");
   };
+
+  // Log before render to verify component is about to render
+  console.log("ObjectiveList about to render, objectives count:", objectives.length);
 
   return (
     <div className={cn("space-y-8", className)}>
