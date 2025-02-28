@@ -607,6 +607,11 @@ export const getActiveCycle = (): OKRCycle | undefined => {
   return cycles.find(cycle => cycle.active);
 };
 
+// Generate department stats dynamically to ensure they're always up to date
+export const getDepartmentStats = (departmentId: DepartmentId): DepartmentStats => {
+  return useOKRStore.getState().getDepartmentStats(departmentId);
+};
+
 // Export departmentStats
 export const departmentStats: Record<DepartmentId, DepartmentStats> = {
   leadership: useOKRStore.getState().getDepartmentStats("leadership"),
