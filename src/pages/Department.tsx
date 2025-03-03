@@ -12,8 +12,8 @@ import { ChevronLeft, PlusCircle } from "lucide-react";
 import { Objective, DepartmentId } from "@/types";
 import { createNewObjective } from "@/utils/okrUtils";
 import { toast } from "sonner";
-import { useOKR } from "@/context/OKRContext";
 import { format } from "date-fns";
+import { useOKR } from "@/context/OKRContext";
 
 const Department = () => {
   const { id } = useParams<{ id: string }>();
@@ -25,7 +25,8 @@ const Department = () => {
     updateObjectives, 
     departmentStats,
     globalStartDate,
-    globalEndDate
+    globalEndDate,
+    cycle
   } = useOKR();
   
   const [objectives, setObjectives] = useState<Objective[]>([]);
@@ -71,12 +72,13 @@ const Department = () => {
     const departmentUser = users.find(user => user.departmentId === id as DepartmentId);
     const defaultOwnerId = departmentUser ? departmentUser.id : users[0].id;
     
-    // Create new objective with global dates
+    // Create new objective with global dates and cycle
     const newObjective = createNewObjective(id as DepartmentId, defaultOwnerId);
     
-    // Override with global dates
+    // Override with global dates and cycle
     newObjective.startDate = globalStartDate;
     newObjective.endDate = globalEndDate;
+    newObjective.cycle = cycle;
     
     const updatedObjectives = [...objectives, newObjective];
     
@@ -127,7 +129,7 @@ const Department = () => {
             <div className="grid md:grid-cols-4 gap-6 mb-6">
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">Cycle</p>
-                <p className="font-medium">{objectives[0]?.cycle || "Q1"}</p>
+                <p className="font-medium">{cycle} 2025</p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">Start Date</p>
@@ -136,6 +138,12 @@ const Department = () => {
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">End Date</p>
                 <p className="font-medium">{endDate}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-gray-500">Settings</p>
+                <Link to="/settings">
+                  <Button variant="outline" size="sm">Manage Settings</Button>
+                </Link>
               </div>
             </div>
 

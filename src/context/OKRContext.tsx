@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Objective, DepartmentId } from '@/types';
 import { getObjectivesByDepartment, departmentStats as initialDepartmentStats } from '@/data/okrData';
@@ -13,6 +14,8 @@ type OKRContextType = {
   globalEndDate: string;
   updateGlobalDates: (startDate: string, endDate: string) => void;
   refreshStats: () => void;
+  cycle: string;
+  updateCycle: (newCycle: string) => void;
 };
 
 const OKRContext = createContext<OKRContextType | undefined>(undefined);
@@ -28,6 +31,9 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const [departmentStats, setDepartmentStats] = useState(initialDepartmentStats);
+  
+  // Set up global cycle (for all departments)
+  const [cycle, setCycle] = useState<string>("Q1");
   
   // Set up global dates (for all departments)
   const [globalStartDate, setGlobalStartDate] = useState<string>(() => {
@@ -90,6 +96,11 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     if (savedGlobalEndDate) {
       setGlobalEndDate(savedGlobalEndDate);
     }
+    
+    const savedCycle = localStorage.getItem('okr_cycle');
+    if (savedCycle) {
+      setCycle(savedCycle);
+    }
   }, []);
 
   // Save to localStorage whenever objectives change
@@ -107,6 +118,11 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     localStorage.setItem('okr_global_start_date', globalStartDate);
     localStorage.setItem('okr_global_end_date', globalEndDate);
   }, [globalStartDate, globalEndDate]);
+  
+  // Save cycle to localStorage
+  useEffect(() => {
+    localStorage.setItem('okr_cycle', cycle);
+  }, [cycle]);
   
   // Automatically refresh stats once per day
   useEffect(() => {
@@ -153,6 +169,21 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     
     // Recalculate stats for all departments
     refreshStats();
+  };
+  
+  const updateCycle = (newCycle: string) => {
+    setCycle(newCycle);
+    
+    // Update all objectives with new cycle
+    const updatedObjectives: Record<DepartmentId, Objective[]> = {
+      leadership: objectives.leadership.map(obj => ({ ...obj, cycle: newCycle })),
+      product: objectives.product.map(obj => ({ ...obj, cycle: newCycle })),
+      ai: objectives.ai.map(obj => ({ ...obj, cycle: newCycle })),
+      sales: objectives.sales.map(obj => ({ ...obj, cycle: newCycle })),
+      growth: objectives.growth.map(obj => ({ ...obj, cycle: newCycle })),
+    };
+    
+    setObjectives(updatedObjectives);
   };
   
   const refreshStats = () => {
@@ -206,7 +237,9 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
         globalStartDate,
         globalEndDate,
         updateGlobalDates,
-        refreshStats
+        refreshStats,
+        cycle,
+        updateCycle
       }}
     >
       {children}

@@ -2,6 +2,7 @@
 import { Link } from "react-router-dom";
 import Logo from "./Logo";
 import { Button } from "@/components/ui/button";
+import { Settings } from "lucide-react";
 
 const Navbar = () => {
   return (
@@ -47,6 +48,13 @@ const Navbar = () => {
               className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground"
             >
               Growth
+            </Link>
+            <Link
+              to="/settings"
+              className="text-sm font-medium text-foreground/80 transition-colors hover:text-foreground flex items-center gap-1"
+            >
+              <Settings size={14} />
+              Settings
             </Link>
           </nav>
         </div>

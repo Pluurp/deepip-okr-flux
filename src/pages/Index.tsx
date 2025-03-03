@@ -1,53 +1,27 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { departments } from "@/data/departments";
-import { departmentStats, getObjectivesByDepartment, objectives } from "@/data/okrData";
+import { getObjectivesByDepartment } from "@/data/okrData";
 import DepartmentCard from "@/components/DepartmentCard";
 import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Calendar, Pencil } from "lucide-react";
+import { Calendar } from "lucide-react";
 import { format } from "date-fns";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 import { useOKR } from "@/context/OKRContext";
-import { toast } from "sonner";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
-  const { globalStartDate, globalEndDate, updateGlobalDates, departmentStats: contextStats } = useOKR();
-  const [dateType, setDateType] = useState<"start" | "end">("start");
+  const { 
+    globalStartDate, 
+    globalEndDate, 
+    departmentStats: contextStats,
+    cycle
+  } = useOKR();
   
   useEffect(() => {
     document.title = "OKR Dashboard | DeepIP";
   }, []);
-
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date) return;
-    
-    if (dateType === "start") {
-      const endDate = new Date(globalEndDate);
-      
-      // Ensure start date isn't after end date
-      if (date > endDate) {
-        toast.error("Start date cannot be after end date");
-        return;
-      }
-      
-      updateGlobalDates(date.toISOString(), globalEndDate);
-      toast.success("Start date updated for all departments");
-    } else {
-      const startDate = new Date(globalStartDate);
-      
-      // Ensure end date isn't before start date
-      if (date < startDate) {
-        toast.error("End date cannot be before start date");
-        return;
-      }
-      
-      updateGlobalDates(globalStartDate, date.toISOString());
-      toast.success("End date updated for all departments");
-    }
-  };
 
   const formatDate = (dateString: string) => {
     try {
@@ -58,6 +32,14 @@ const Index = () => {
   };
   
   // Calculate overall company progress
+  const objectives = {
+    leadership: getObjectivesByDepartment('leadership'),
+    product: getObjectivesByDepartment('product'),
+    ai: getObjectivesByDepartment('ai'),
+    sales: getObjectivesByDepartment('sales'),
+    growth: getObjectivesByDepartment('growth'),
+  };
+  
   const allObjectives = Object.values(objectives).flat();
   const overallProgress = allObjectives.length > 0
     ? Math.round(allObjectives.reduce((sum, obj) => sum + obj.progress, 0) / allObjectives.length)
@@ -80,65 +62,39 @@ const Index = () => {
           </div>
           
           <Card className="p-2 px-4 bg-white shadow-sm border">
-            <span className="text-sm font-medium text-deepip-primary">Q1 2025</span>
+            <span className="text-sm font-medium text-deepip-primary">{cycle} 2025</span>
           </Card>
         </div>
 
         <Card className="mb-6 overflow-hidden border-0 shadow-sm">
           <CardContent className="p-6">
-            <div className="grid grid-cols-2 gap-6 mb-4">
+            <div className="grid md:grid-cols-3 gap-6 mb-4">
               <div className="space-y-1">
-                <p className="text-sm text-gray-500">Global Start Date</p>
+                <p className="text-sm text-gray-500">Cycle</p>
+                <p className="font-medium">{cycle} 2025</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-sm text-gray-500">Start Date</p>
                 <div className="flex items-center gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 flex items-center gap-2"
-                        onClick={() => setDateType("start")}
-                      >
-                        {formatDate(globalStartDate)}
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <CalendarComponent
-                        mode="single"
-                        selected={new Date(globalStartDate)}
-                        onSelect={handleDateSelect}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <p className="font-medium">{formatDate(globalStartDate)}</p>
                 </div>
               </div>
               <div className="space-y-1">
-                <p className="text-sm text-gray-500">Global End Date</p>
+                <p className="text-sm text-gray-500">End Date</p>
                 <div className="flex items-center gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8 flex items-center gap-2"
-                        onClick={() => setDateType("end")}
-                      >
-                        {formatDate(globalEndDate)}
-                        <Pencil className="h-3.5 w-3.5" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <CalendarComponent
-                        mode="single"
-                        selected={new Date(globalEndDate)}
-                        onSelect={handleDateSelect}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <p className="font-medium">{formatDate(globalEndDate)}</p>
                 </div>
               </div>
+            </div>
+            
+            <div className="mt-4 flex justify-end">
+              <Link to="/settings">
+                <Button variant="outline" size="sm">
+                  Manage Settings
+                </Button>
+              </Link>
             </div>
           </CardContent>
         </Card>
@@ -219,7 +175,7 @@ const Index = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <Card className="p-4 border shadow-sm">
                     <p className="text-sm text-gray-500">Total Objectives</p>
-                    <p className="text-2xl font-medium">{objectives.length}</p>
+                    <p className="text-2xl font-medium">{allObjectives.length}</p>
                   </Card>
                   <Card className="p-4 border shadow-sm">
                     <p className="text-sm text-gray-500">On Track</p>
