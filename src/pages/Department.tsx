@@ -3,19 +3,16 @@ import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { getDepartmentById } from "@/data/departments";
-import { useOKRStore, getDepartmentStats, users } from "@/data/okrData";
+import { departmentStats, getObjectivesByDepartment, users } from "@/data/okrData";
 import ObjectiveList from "@/components/ObjectiveList";
 import ProgressBar from "@/components/ProgressBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, PlusCircle } from "lucide-react";
-import { DepartmentId } from "@/types";
-import { toast } from "sonner";
+import { ChevronLeft } from "lucide-react";
 
 const Department = () => {
   const { id } = useParams<{ id: string }>();
   const department = getDepartmentById(id || "");
-  const { objectives, addObjective } = useOKRStore();
   
   useEffect(() => {
     if (department) {
@@ -36,15 +33,8 @@ const Department = () => {
     );
   }
 
-  // Cast id to DepartmentId to fix TypeScript error
-  const departmentId = id as DepartmentId;
-  const stats = getDepartmentStats(departmentId);
-  const departmentObjectives = objectives.filter(obj => obj.departmentId === departmentId);
-
-  const handleAddObjective = () => {
-    addObjective(departmentId);
-    toast.success("New objective added");
-  };
+  const stats = departmentStats[id];
+  const objectives = getObjectivesByDepartment(id);
 
   return (
     <DashboardLayout>
@@ -61,12 +51,7 @@ const Department = () => {
               <h1 className="text-2xl font-bold" style={{ color: department.color }}>
                 {department.name}
               </h1>
-              <Button 
-                size="sm" 
-                className="bg-deepip-primary text-white hover:bg-deepip-primary/90"
-                onClick={handleAddObjective}
-              >
-                <PlusCircle size={16} className="mr-2" />
+              <Button size="sm" className="bg-deepip-primary text-white hover:bg-deepip-primary/90">
                 Add Objective
               </Button>
             </CardTitle>
@@ -123,7 +108,7 @@ const Department = () => {
         </Card>
 
         <div className="mt-8 animate-slide-in">
-          <ObjectiveList objectives={departmentObjectives} users={users} />
+          <ObjectiveList objectives={objectives} users={users} />
         </div>
       </div>
     </DashboardLayout>

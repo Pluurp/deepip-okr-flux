@@ -7,7 +7,6 @@ type DashboardLayoutProps = {
 };
 
 const DashboardLayout = ({ children }: DashboardLayoutProps) => {
-  console.log("Rendering DashboardLayout component");
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
