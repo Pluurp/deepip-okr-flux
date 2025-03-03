@@ -1,15 +1,24 @@
 
-import { Objective, KeyResult, User } from "@/types";
+import React from "react";
+import { Objective, KeyResult, User, Status } from "@/types";
 import ProgressBar from "./ProgressBar";
 import { cn } from "@/lib/utils";
+import EditableText from "./EditableText";
+import EditableNumber from "./EditableNumber";
+import EditableSelect from "./EditableSelect";
+import { Button } from "./ui/button";
+import { PlusCircle, Trash2 } from "lucide-react";
+import { calculateProgress, createNewKeyResult } from "@/utils/okrUtils";
+import { toast } from "sonner";
 
 type ObjectiveListProps = {
   objectives: Objective[];
   users: User[];
   className?: string;
+  onUpdate?: (objectives: Objective[]) => void;
 };
 
-const ObjectiveList = ({ objectives, users, className }: ObjectiveListProps) => {
+const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveListProps) => {
   const getOwnerName = (ownerId: string) => {
     const owner = users.find(user => user.id === ownerId);
     return owner ? owner.name : "Unassigned";
@@ -30,19 +39,204 @@ const ObjectiveList = ({ objectives, users, className }: ObjectiveListProps) => 
     }
   };
 
+  const handleObjectiveTitleChange = (objective: Objective, newTitle: string) => {
+    if (!onUpdate) return;
+    
+    const updatedObjectives = objectives.map(obj => 
+      obj.id === objective.id ? { ...obj, title: newTitle } : obj
+    );
+    
+    onUpdate(updatedObjectives);
+    toast.success("Objective title updated");
+  };
+
+  const handleKeyResultTitleChange = (keyResult: KeyResult, newTitle: string) => {
+    if (!onUpdate) return;
+    
+    const updatedObjectives = objectives.map(obj => {
+      if (obj.id === keyResult.objectiveId) {
+        const updatedKeyResults = obj.keyResults.map(kr => 
+          kr.id === keyResult.id ? { ...kr, title: newTitle } : kr
+        );
+        return { ...obj, keyResults: updatedKeyResults };
+      }
+      return obj;
+    });
+    
+    onUpdate(updatedObjectives);
+    toast.success("Key result title updated");
+  };
+
+  const handleKeyResultValueChange = (keyResult: KeyResult, field: 'startValue' | 'targetValue' | 'currentValue', value: number) => {
+    if (!onUpdate) return;
+    
+    const updatedObjectives = objectives.map(obj => {
+      if (obj.id === keyResult.objectiveId) {
+        const updatedKeyResults = obj.keyResults.map(kr => {
+          if (kr.id === keyResult.id) {
+            const updatedKr = { ...kr, [field]: value };
+            
+            // Recalculate progress
+            updatedKr.progress = calculateProgress(
+              updatedKr.startValue, 
+              updatedKr.targetValue, 
+              updatedKr.currentValue
+            );
+            
+            return updatedKr;
+          }
+          return kr;
+        });
+        
+        // Recalculate objective progress
+        const objProgress = Math.round(
+          updatedKeyResults.reduce((sum, kr) => sum + kr.progress, 0) / updatedKeyResults.length
+        );
+        
+        return { 
+          ...obj, 
+          keyResults: updatedKeyResults,
+          progress: objProgress
+        };
+      }
+      return obj;
+    });
+    
+    onUpdate(updatedObjectives);
+    toast.success(`Key result ${field.replace('Value', '')} updated`);
+  };
+
+  const handleKeyResultOwnerChange = (keyResult: KeyResult, ownerId: string) => {
+    if (!onUpdate) return;
+    
+    const updatedObjectives = objectives.map(obj => {
+      if (obj.id === keyResult.objectiveId) {
+        const updatedKeyResults = obj.keyResults.map(kr => 
+          kr.id === keyResult.id ? { ...kr, ownerId } : kr
+        );
+        return { ...obj, keyResults: updatedKeyResults };
+      }
+      return obj;
+    });
+    
+    onUpdate(updatedObjectives);
+    toast.success("Key result owner updated");
+  };
+
+  const handleKeyResultStatusChange = (keyResult: KeyResult, status: string) => {
+    if (!onUpdate) return;
+    
+    const updatedObjectives = objectives.map(obj => {
+      if (obj.id === keyResult.objectiveId) {
+        const updatedKeyResults = obj.keyResults.map(kr => 
+          kr.id === keyResult.id ? { ...kr, status: status as Status } : kr
+        );
+        return { ...obj, keyResults: updatedKeyResults };
+      }
+      return obj;
+    });
+    
+    onUpdate(updatedObjectives);
+    toast.success("Key result status updated");
+  };
+
+  const handleAddKeyResult = (objective: Objective) => {
+    if (!onUpdate) return;
+    
+    const newKeyResult = createNewKeyResult(objective.id, objective.ownerId);
+    
+    const updatedObjectives = objectives.map(obj => {
+      if (obj.id === objective.id) {
+        return {
+          ...obj,
+          keyResults: [...obj.keyResults, newKeyResult]
+        };
+      }
+      return obj;
+    });
+    
+    onUpdate(updatedObjectives);
+    toast.success("New key result added");
+  };
+
+  const handleDeleteKeyResult = (keyResult: KeyResult) => {
+    if (!onUpdate) return;
+    
+    const updatedObjectives = objectives.map(obj => {
+      if (obj.id === keyResult.objectiveId) {
+        // Don't delete if it's the only key result
+        if (obj.keyResults.length <= 1) {
+          toast.error("Cannot delete the only key result");
+          return obj;
+        }
+        
+        const updatedKeyResults = obj.keyResults.filter(kr => kr.id !== keyResult.id);
+        
+        // Recalculate objective progress
+        const objProgress = Math.round(
+          updatedKeyResults.reduce((sum, kr) => sum + kr.progress, 0) / updatedKeyResults.length
+        );
+        
+        return { 
+          ...obj, 
+          keyResults: updatedKeyResults,
+          progress: objProgress
+        };
+      }
+      return obj;
+    });
+    
+    onUpdate(updatedObjectives);
+    toast.success("Key result deleted");
+  };
+
+  const handleDeleteObjective = (objective: Objective) => {
+    if (!onUpdate) return;
+    
+    const updatedObjectives = objectives.filter(obj => obj.id !== objective.id);
+    onUpdate(updatedObjectives);
+    toast.success("Objective deleted");
+  };
+
   return (
     <div className={cn("space-y-8", className)}>
       {objectives.map((objective) => (
         <div key={objective.id} className="border rounded-lg overflow-hidden bg-white">
           <div className="p-4 border-b bg-gray-50">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">{objective.title}</h3>
+              <h3 className="text-lg font-medium">
+                <EditableText
+                  value={objective.title}
+                  onChange={(newTitle) => handleObjectiveTitleChange(objective, newTitle)}
+                  className="font-medium text-lg"
+                />
+              </h3>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500">Progress:</span>
                 <span className="font-medium">{objective.progress}%</span>
               </div>
             </div>
             <ProgressBar value={objective.progress} className="mt-2" />
+            <div className="flex justify-between mt-4">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="flex items-center gap-1"
+                onClick={() => handleAddKeyResult(objective)}
+              >
+                <PlusCircle size={16} />
+                Add Key Result
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={() => handleDeleteObjective(objective)}
+              >
+                <Trash2 size={16} />
+                Delete Objective
+              </Button>
+            </div>
           </div>
           
           <div className="overflow-x-auto">
@@ -57,16 +251,53 @@ const ObjectiveList = ({ objectives, users, className }: ObjectiveListProps) => 
                   <th className="px-4 py-2 text-left font-medium text-gray-500">Progress</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-500">Owner</th>
                   <th className="px-4 py-2 text-left font-medium text-gray-500">Status</th>
+                  <th className="px-4 py-2 text-left font-medium text-gray-500">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {objective.keyResults.map((kr) => (
                   <tr key={kr.id} className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-3">{kr.title}</td>
-                    <td className="px-4 py-3">{kr.metric}</td>
-                    <td className="px-4 py-3">{kr.startValue}{kr.metric === 'Percentage' ? '%' : ''}</td>
-                    <td className="px-4 py-3">{kr.targetValue}{kr.metric === 'Percentage' ? '%' : ''}</td>
-                    <td className="px-4 py-3">{kr.currentValue}{kr.metric === 'Percentage' ? '%' : ''}</td>
+                    <td className="px-4 py-3">
+                      <EditableText
+                        value={kr.title}
+                        onChange={(newTitle) => handleKeyResultTitleChange(kr, newTitle)}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <EditableSelect
+                        value={kr.metric}
+                        options={[
+                          { value: "Percentage", label: "Percentage" },
+                          { value: "Numerical", label: "Numerical" },
+                          { value: "Yes/No", label: "Yes/No" },
+                        ]}
+                        onChange={(value) => {
+                          /* Metric changes will be handled in a future update */
+                          toast.info("Changing metric type will be available in a future update");
+                        }}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <EditableNumber
+                        value={kr.startValue}
+                        onChange={(value) => handleKeyResultValueChange(kr, 'startValue', value)}
+                        suffix={kr.metric === 'Percentage' ? '%' : ''}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <EditableNumber
+                        value={kr.targetValue}
+                        onChange={(value) => handleKeyResultValueChange(kr, 'targetValue', value)}
+                        suffix={kr.metric === 'Percentage' ? '%' : ''}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <EditableNumber
+                        value={kr.currentValue}
+                        onChange={(value) => handleKeyResultValueChange(kr, 'currentValue', value)}
+                        suffix={kr.metric === 'Percentage' ? '%' : ''}
+                      />
+                    </td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <ProgressBar 
@@ -77,11 +308,35 @@ const ObjectiveList = ({ objectives, users, className }: ObjectiveListProps) => 
                         <span>{kr.progress}%</span>
                       </div>
                     </td>
-                    <td className="px-4 py-3">{getOwnerName(kr.ownerId)}</td>
                     <td className="px-4 py-3">
-                      <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getStatusColor(kr.status))}>
-                        {kr.status}
-                      </span>
+                      <EditableSelect
+                        value={kr.ownerId}
+                        options={users.map(user => ({ value: user.id, label: user.name }))}
+                        onChange={(value) => handleKeyResultOwnerChange(kr, value)}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <EditableSelect
+                        value={kr.status}
+                        options={[
+                          { value: "Off Track", label: "Off Track" },
+                          { value: "At Risk", label: "At Risk" },
+                          { value: "On track", label: "On track" },
+                          { value: "Completed", label: "Completed" },
+                        ]}
+                        onChange={(value) => handleKeyResultStatusChange(kr, value)}
+                        valueClassName={cn("px-2 py-1 rounded-full text-xs font-medium", getStatusColor(kr.status))}
+                      />
+                    </td>
+                    <td className="px-4 py-3">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        onClick={() => handleDeleteKeyResult(kr)}
+                      >
+                        <Trash2 size={16} />
+                      </Button>
                     </td>
                   </tr>
                 ))}

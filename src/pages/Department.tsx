@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { getDepartmentById } from "@/data/departments";
@@ -8,17 +8,28 @@ import ObjectiveList from "@/components/ObjectiveList";
 import ProgressBar from "@/components/ProgressBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
+import { ChevronLeft, PlusCircle } from "lucide-react";
+import { Objective, DepartmentId } from "@/types";
+import { createNewObjective } from "@/utils/okrUtils";
+import { toast } from "sonner";
 
 const Department = () => {
   const { id } = useParams<{ id: string }>();
   const department = getDepartmentById(id || "");
+  const [objectives, setObjectives] = useState<Objective[]>([]);
   
   useEffect(() => {
     if (department) {
       document.title = `${department.name} | DeepIP OKRs`;
     }
   }, [department]);
+
+  useEffect(() => {
+    if (id) {
+      const departmentObjectives = getObjectivesByDepartment(id as DepartmentId);
+      setObjectives(departmentObjectives);
+    }
+  }, [id]);
 
   if (!department || !id) {
     return (
@@ -33,8 +44,22 @@ const Department = () => {
     );
   }
 
-  const stats = departmentStats[id];
-  const objectives = getObjectivesByDepartment(id);
+  const stats = departmentStats[id as DepartmentId];
+
+  const handleObjectivesUpdate = (updatedObjectives: Objective[]) => {
+    setObjectives(updatedObjectives);
+    console.log("Objectives updated:", updatedObjectives);
+  };
+
+  const handleAddObjective = () => {
+    // Find a default owner from the department
+    const departmentUser = users.find(user => user.departmentId === id as DepartmentId);
+    const defaultOwnerId = departmentUser ? departmentUser.id : users[0].id;
+    
+    const newObjective = createNewObjective(id as DepartmentId, defaultOwnerId);
+    setObjectives(prev => [...prev, newObjective]);
+    toast.success("New objective added");
+  };
 
   return (
     <DashboardLayout>
@@ -48,10 +73,15 @@ const Department = () => {
           <div className="h-1.5" style={{ backgroundColor: department.color }}></div>
           <CardHeader className="pb-2">
             <CardTitle className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold" style={{ color: department.color }}>
+              <span className="text-2xl font-bold" style={{ color: department.color }}>
                 {department.name}
-              </h1>
-              <Button size="sm" className="bg-deepip-primary text-white hover:bg-deepip-primary/90">
+              </span>
+              <Button 
+                size="sm" 
+                className="bg-deepip-primary text-white hover:bg-deepip-primary/90 flex items-center gap-1" 
+                onClick={handleAddObjective}
+              >
+                <PlusCircle size={16} />
                 Add Objective
               </Button>
             </CardTitle>
@@ -108,7 +138,11 @@ const Department = () => {
         </Card>
 
         <div className="mt-8 animate-slide-in">
-          <ObjectiveList objectives={objectives} users={users} />
+          <ObjectiveList 
+            objectives={objectives} 
+            users={users} 
+            onUpdate={handleObjectivesUpdate}
+          />
         </div>
       </div>
     </DashboardLayout>
