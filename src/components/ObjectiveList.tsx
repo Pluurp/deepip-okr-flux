@@ -1,4 +1,3 @@
-
 import { Objective, KeyResult, User, Status, ConfidenceLevel } from "@/types";
 import ProgressBar from "./ProgressBar";
 import { cn } from "@/lib/utils";
