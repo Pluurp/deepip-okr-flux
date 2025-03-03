@@ -31,22 +31,33 @@ const EditableNumber = ({
     }
   }, [isEditing]);
 
+  useEffect(() => {
+    // Update internal state when external value changes
+    if (!isEditing) {
+      setNumberValue(value.toString());
+    }
+  }, [value, isEditing]);
+
   const handleDoubleClick = () => {
     setIsEditing(true);
   };
 
-  const handleBlur = () => {
-    setIsEditing(false);
-    const newValue = parseFloat(numberValue);
+  const validateAndSetValue = (inputValue: string) => {
+    const newValue = parseFloat(inputValue);
     if (!isNaN(newValue)) {
       let finalValue = newValue;
       if (min !== undefined) finalValue = Math.max(min, finalValue);
       if (max !== undefined) finalValue = Math.min(max, finalValue);
-      onChange(finalValue);
-      setNumberValue(finalValue.toString());
-    } else {
-      setNumberValue(value.toString());
+      return finalValue;
     }
+    return value; // Return original value if input is invalid
+  };
+
+  const handleBlur = () => {
+    setIsEditing(false);
+    const finalValue = validateAndSetValue(numberValue);
+    onChange(finalValue);
+    setNumberValue(finalValue.toString());
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {

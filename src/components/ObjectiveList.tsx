@@ -59,6 +59,10 @@ const ObjectiveList = ({ objectives, users, className }: ObjectiveListProps) => 
     toast.success("New Key Result added");
   };
 
+  const validateNumber = (value: number, min: number = 0): number => {
+    return Math.max(min, value);
+  };
+
   return (
     <div className={cn("space-y-8", className)}>
       {objectives.map((objective) => (
@@ -125,22 +129,25 @@ const ObjectiveList = ({ objectives, users, className }: ObjectiveListProps) => 
                     <td className="px-4 py-3">
                       <EditableNumber
                         value={kr.startValue}
-                        onChange={(value) => updateKeyResult(objective.id, kr.id, { startValue: value })}
+                        onChange={(value) => updateKeyResult(objective.id, kr.id, { startValue: validateNumber(value, 0) })}
                         suffix={kr.metric === 'Percentage' ? '%' : ''}
+                        min={0}
                       />
                     </td>
                     <td className="px-4 py-3">
                       <EditableNumber
                         value={kr.targetValue}
-                        onChange={(value) => updateKeyResult(objective.id, kr.id, { targetValue: value })}
+                        onChange={(value) => updateKeyResult(objective.id, kr.id, { targetValue: validateNumber(value, kr.startValue) })}
                         suffix={kr.metric === 'Percentage' ? '%' : ''}
+                        min={kr.startValue}
                       />
                     </td>
                     <td className="px-4 py-3">
                       <EditableNumber
                         value={kr.currentValue}
-                        onChange={(value) => updateKeyResult(objective.id, kr.id, { currentValue: value })}
+                        onChange={(value) => updateKeyResult(objective.id, kr.id, { currentValue: validateNumber(value, 0) })}
                         suffix={kr.metric === 'Percentage' ? '%' : ''}
+                        min={0}
                       />
                     </td>
                     <td className="px-4 py-3">

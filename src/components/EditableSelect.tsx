@@ -22,6 +22,7 @@ const EditableSelect = <T extends string>({
   getOptionClass,
 }: EditableSelectProps<T>) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedValue, setSelectedValue] = useState<T>(value);
   const selectRef = useRef<HTMLSelectElement>(null);
 
   useEffect(() => {
@@ -30,25 +31,45 @@ const EditableSelect = <T extends string>({
     }
   }, [isEditing]);
 
+  useEffect(() => {
+    // Update internal state when external value changes
+    if (!isEditing) {
+      setSelectedValue(value);
+    }
+  }, [value, isEditing]);
+
   const handleDoubleClick = () => {
     setIsEditing(true);
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    onChange(e.target.value as T);
+    setSelectedValue(e.target.value as T);
   };
 
   const handleBlur = () => {
     setIsEditing(false);
+    onChange(selectedValue);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      setIsEditing(false);
+      onChange(selectedValue);
+    }
+    if (e.key === "Escape") {
+      setIsEditing(false);
+      setSelectedValue(value);
+    }
   };
 
   if (isEditing) {
     return (
       <select
         ref={selectRef}
-        value={value}
+        value={selectedValue}
         onChange={handleChange}
         onBlur={handleBlur}
+        onKeyDown={handleKeyDown}
         className={cn(
           "bg-transparent border-b border-deepip-primary outline-none px-1 py-0.5 text-sm",
           className

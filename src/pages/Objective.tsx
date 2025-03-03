@@ -6,7 +6,7 @@ import { useOKRStore, getUserById, users } from "@/data/okrData";
 import { getDepartmentById } from "@/data/departments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProgressBar from "@/components/ProgressBar";
-import { ChevronLeft, PlusCircle, Trash2 } from "lucide-react";
+import { ChevronLeft, PlusCircle, Trash2, CalendarIcon } from "lucide-react";
 import EditableText from "@/components/EditableText";
 import EditableNumber from "@/components/EditableNumber";
 import EditableSelect from "@/components/EditableSelect";
@@ -57,6 +57,11 @@ const Objective = () => {
     }
   };
 
+  const validateNumber = (value: number, min: number = 0): number => {
+    return Math.max(min, value);
+  };
+
+  const cycleOptions = ["Q1", "Q2", "Q3", "Q4"] as const;
   const statusOptions = ["Off Track", "At Risk", "On track", "Completed"] as const;
   const confidenceLevelOptions = ["Low", "Medium", "High"] as const;
 
@@ -74,6 +79,11 @@ const Objective = () => {
     deleteObjective(objective.id);
     toast.success("Objective deleted");
     navigate(`/departments/${objective.departmentId}`);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString();
   };
 
   return (
@@ -125,7 +135,12 @@ const Objective = () => {
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">Cycle</p>
-                <p className="font-medium">{objective.cycle}</p>
+                <EditableSelect<string>
+                  value={objective.cycle}
+                  options={cycleOptions}
+                  onChange={(value) => updateObjective(objective.id, { cycle: value })}
+                  className="font-medium"
+                />
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">Progress</p>
@@ -139,11 +154,17 @@ const Objective = () => {
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">Start Date</p>
-                <p className="font-medium">{new Date(objective.startDate).toLocaleDateString()}</p>
+                <p className="font-medium flex items-center gap-2">
+                  <CalendarIcon size={14} />
+                  {formatDate(objective.startDate)}
+                </p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">End Date</p>
-                <p className="font-medium">{new Date(objective.endDate).toLocaleDateString()}</p>
+                <p className="font-medium flex items-center gap-2">
+                  <CalendarIcon size={14} />
+                  {formatDate(objective.endDate)}
+                </p>
               </div>
             </div>
           </CardContent>
@@ -233,27 +254,30 @@ const Objective = () => {
                             <p className="text-sm text-gray-500">Start Value</p>
                             <EditableNumber
                               value={kr.startValue}
-                              onChange={(value) => updateKeyResult(objective.id, kr.id, { startValue: value })}
+                              onChange={(value) => updateKeyResult(objective.id, kr.id, { startValue: validateNumber(value, 0) })}
                               suffix={kr.metric === 'Percentage' ? '%' : ''}
                               className="font-medium"
+                              min={0}
                             />
                           </div>
                           <div>
                             <p className="text-sm text-gray-500">Current Value</p>
                             <EditableNumber
                               value={kr.currentValue}
-                              onChange={(value) => updateKeyResult(objective.id, kr.id, { currentValue: value })}
+                              onChange={(value) => updateKeyResult(objective.id, kr.id, { currentValue: validateNumber(value, 0) })}
                               suffix={kr.metric === 'Percentage' ? '%' : ''}
                               className="font-medium"
+                              min={0}
                             />
                           </div>
                           <div>
                             <p className="text-sm text-gray-500">Target Value</p>
                             <EditableNumber
                               value={kr.targetValue}
-                              onChange={(value) => updateKeyResult(objective.id, kr.id, { targetValue: value })}
+                              onChange={(value) => updateKeyResult(objective.id, kr.id, { targetValue: validateNumber(value, kr.startValue) })}
                               suffix={kr.metric === 'Percentage' ? '%' : ''}
                               className="font-medium"
+                              min={kr.startValue}
                             />
                           </div>
                         </div>
