@@ -12,7 +12,6 @@ import { ChevronLeft, PlusCircle } from "lucide-react";
 import { Objective, DepartmentId } from "@/types";
 import { createNewObjective } from "@/utils/okrUtils";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { useOKR } from "@/context/OKRContext";
 
 const Department = () => {
@@ -88,18 +87,6 @@ const Department = () => {
     toast.success("New objective added");
   };
 
-  // Format dates for display
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "MMMM d, yyyy");
-    } catch (e) {
-      return "Invalid date";
-    }
-  };
-    
-  const startDate = formatDate(globalStartDate);
-  const endDate = formatDate(globalEndDate);
-
   return (
     <DashboardLayout>
       <div className="animate-fade-in">
@@ -126,18 +113,10 @@ const Department = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <div className="grid md:grid-cols-4 gap-6 mb-6">
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">Cycle</p>
                 <p className="font-medium">{cycle} 2025</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-gray-500">Start Date</p>
-                <p className="font-medium">{startDate}</p>
-              </div>
-              <div className="space-y-1">
-                <p className="text-sm text-gray-500">End Date</p>
-                <p className="font-medium">{endDate}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">Settings</p>

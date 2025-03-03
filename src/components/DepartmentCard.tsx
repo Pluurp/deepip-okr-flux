@@ -39,7 +39,8 @@ const DepartmentCard = ({
             </div>
             <div className="text-right">
               <p className="text-gray-500 text-right">&nbsp;</p>
-              <p className="font-medium">{Math.round((stats.daysRemaining / stats.totalDays) * 100)}%</p>
+              {/* Removed percentage calculation here */}
+              <p className="font-medium">&nbsp;</p>
             </div>
             <div>
               <p className="text-gray-500">Time progress</p>

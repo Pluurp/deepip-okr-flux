@@ -39,7 +39,7 @@ export const getStatusFromProgress = (progress: number): Status => {
 
 /**
  * Calculate time progress based on start and end dates
- * This automatically uses today's date for calculations
+ * This will use the provided current date for calculations
  */
 export const calculateTimeProgress = (startDate: string, endDate: string, currentDate: Date = new Date()): number => {
   const start = new Date(startDate).getTime();
@@ -49,10 +49,12 @@ export const calculateTimeProgress = (startDate: string, endDate: string, curren
   // If the date range is invalid, return 0
   if (end <= start) return 0;
   
-  // Calculate percentage
-  const totalTime = end - start;
-  const elapsedTime = now - start;
-  const progress = (elapsedTime / totalTime) * 100;
+  // Calculate days passed since start date
+  const totalDays = (end - start) / (1000 * 60 * 60 * 24);
+  const daysPassed = (now - start) / (1000 * 60 * 60 * 24);
+  
+  // Calculate percentage of time passed
+  const progress = (daysPassed / totalDays) * 100;
   
   // Clamp between 0 and 100
   return Math.min(Math.max(progress, 0), 100);
@@ -60,7 +62,7 @@ export const calculateTimeProgress = (startDate: string, endDate: string, curren
 
 /**
  * Calculate days remaining until end date
- * This automatically uses today's date for calculations
+ * This will use the provided current date for calculations
  */
 export const calculateDaysRemaining = (endDate: string, currentDate: Date = new Date()): number => {
   const end = new Date(endDate).getTime();
