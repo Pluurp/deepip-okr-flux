@@ -8,8 +8,8 @@ import ObjectiveList from "@/components/ObjectiveList";
 import ProgressBar from "@/components/ProgressBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft } from "lucide-react";
-import { Objective, DepartmentId } from "@/types";
+import { ChevronLeft, Plus } from "lucide-react";
+import { Objective, DepartmentId, KeyResult } from "@/types";
 import { toast } from "sonner";
 
 const Department = () => {
@@ -53,6 +53,38 @@ const Department = () => {
     console.log("Objectives updated:", updatedObjectives);
   };
 
+  const handleAddObjective = () => {
+    // Create a default key result for the new objective
+    const newKeyResult: KeyResult = {
+      id: `kr-new-${Date.now()}`,
+      title: "New Key Result",
+      objectiveId: `new-${Date.now()}`,
+      metric: "Percentage",
+      startValue: 0,
+      targetValue: 100,
+      currentValue: 0,
+      progress: 0,
+      ownerId: users[0].id, // Default to first user
+      status: "On track",
+      confidenceLevel: "Medium"
+    };
+
+    const newObjective: Objective = {
+      id: `new-${Date.now()}`,
+      title: "New Objective",
+      departmentId: id as DepartmentId,
+      progress: 0,
+      keyResults: [newKeyResult],
+      cycle: "Q1",
+      startDate: "2025-01-01",
+      endDate: "2025-03-31",
+      ownerId: users[0].id, // Default to first user
+    };
+
+    setObjectives((prev) => [...prev, newObjective]);
+    toast.success("New objective added");
+  };
+
   return (
     <DashboardLayout>
       <div className="animate-fade-in">
@@ -68,7 +100,12 @@ const Department = () => {
               <span className="text-2xl font-bold" style={{ color: department.color }}>
                 {department.name}
               </span>
-              <Button size="sm" className="bg-deepip-primary text-white hover:bg-deepip-primary/90">
+              <Button 
+                size="sm" 
+                className="bg-deepip-primary text-white hover:bg-deepip-primary/90" 
+                onClick={handleAddObjective}
+              >
+                <Plus size={16} />
                 Add Objective
               </Button>
             </CardTitle>
