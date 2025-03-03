@@ -81,6 +81,23 @@ export type Objective = {
   ownerId: string;
 };
 
+// New types for Company OKRs
+export type CompanyKeyResult = {
+  id: string;
+  title: string;
+  objectiveId: string;
+};
+
+export type CompanyObjective = {
+  id: string;
+  title: string;
+  keyResults: CompanyKeyResult[];
+  cycle: string; // e.g., "Q1", "Q2"
+  startDate: string; // ISO date string
+  endDate: string; // ISO date string
+  ownerId: string;
+};
+
 export type DepartmentStats = {
   daysRemaining: number;
   totalDays: number;
