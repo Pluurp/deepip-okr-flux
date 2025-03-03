@@ -1,19 +1,20 @@
-
 import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { departments } from "@/data/departments";
 import DepartmentCard from "@/components/DepartmentCard";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Plus } from "lucide-react";
+import { Calendar, Plus, ArrowRight } from "lucide-react";
 import { format } from "date-fns";
 import { useOKR } from "@/context/OKRContext";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import ObjectiveList from "@/components/ObjectiveList";
-import { Objective } from "@/types";
+import { Objective, CompanyObjective } from "@/types";
 import { createNewObjective } from "@/utils/okrUtils";
+import { loadCompanyObjectives } from "@/utils/companyOkrUtils";
 import { toast } from "sonner";
 import StatusIcon from "@/components/StatusIcon";
+import ReadOnlyCompanyObjectiveList from "@/components/ReadOnlyCompanyObjectiveList";
 
 const Index = () => {
   const { 
@@ -27,8 +28,8 @@ const Index = () => {
     users
   } = useOKR();
   
-  // Add state for company objectives
-  const [companyObjectives, setCompanyObjectives] = useState<Objective[]>([]);
+  // Add state for company objectives (read-only)
+  const [companyObjectives, setCompanyObjectives] = useState<CompanyObjective[]>([]);
   
   // Force a refresh when the component mounts to ensure latest data
   useEffect(() => {
@@ -36,22 +37,10 @@ const Index = () => {
     // Ensure we have the latest stats on initial render
     refreshStats();
     
-    // Initialize company objectives
-    const savedCompanyOKRs = localStorage.getItem('company_okrs');
-    if (savedCompanyOKRs) {
-      try {
-        setCompanyObjectives(JSON.parse(savedCompanyOKRs));
-      } catch (e) {
-        console.error('Failed to parse saved company objectives', e);
-      }
-    }
+    // Load company objectives
+    setCompanyObjectives(loadCompanyObjectives());
   }, [refreshStats]);
   
-  // Save company objectives to localStorage when they change
-  useEffect(() => {
-    localStorage.setItem('company_okrs', JSON.stringify(companyObjectives));
-  }, [companyObjectives]);
-
   const formatDate = (dateString: string) => {
     try {
       return format(new Date(dateString), "MMMM d, yyyy");
@@ -60,23 +49,28 @@ const Index = () => {
     }
   };
   
-  // Handle company objective updates
-  const handleCompanyObjectivesUpdate = (updatedObjectives: Objective[]) => {
-    setCompanyObjectives(updatedObjectives);
-  };
-  
-  // Add new company objective
-  const handleAddCompanyObjective = () => {
-    const newObjective = createNewObjective('company', 'user1');
+  // Handle department objective updates
+  const handleAddDepartmentObjective = (departmentId: string) => {
+    // Find a default owner from the department
+    const departmentUser = users.find(user => user.departmentId === departmentId);
+    const defaultOwnerId = departmentUser ? departmentUser.id : users[0].id;
+    
+    // Create new objective with global dates and cycle
+    const newObjective = createNewObjective(departmentId, defaultOwnerId);
     
     // Override with global dates and cycle
     newObjective.startDate = globalStartDate;
     newObjective.endDate = globalEndDate;
     newObjective.cycle = cycle;
     
-    setCompanyObjectives([...companyObjectives, newObjective]);
+    // Get current objectives for this department
+    const currentObjectives = allDepartmentObjectives[departmentId] || [];
+    const updatedObjectives = [...currentObjectives, newObjective];
     
-    toast.success("New company objective added");
+    // Update objectives in context
+    updateObjectives(departmentId, updatedObjectives);
+    
+    toast.success(`New objective added to ${departmentId}`);
   };
   
   // Use useMemo to calculate derived stats to prevent recalculation on every render
@@ -151,30 +145,6 @@ const Index = () => {
     };
   }, [allDepartmentObjectives, contextStats]);
 
-  // Handler for department objectives
-  const handleAddDepartmentObjective = (departmentId: string) => {
-    // Find a default owner from the department
-    const departmentUser = users.find(user => user.departmentId === departmentId);
-    const defaultOwnerId = departmentUser ? departmentUser.id : users[0].id;
-    
-    // Create new objective with global dates and cycle
-    const newObjective = createNewObjective(departmentId, defaultOwnerId);
-    
-    // Override with global dates and cycle
-    newObjective.startDate = globalStartDate;
-    newObjective.endDate = globalEndDate;
-    newObjective.cycle = cycle;
-    
-    // Get current objectives for this department
-    const currentObjectives = allDepartmentObjectives[departmentId] || [];
-    const updatedObjectives = [...currentObjectives, newObjective];
-    
-    // Update objectives in context
-    updateObjectives(departmentId, updatedObjectives);
-    
-    toast.success(`New objective added to ${departmentId}`);
-  };
-
   return (
     <DashboardLayout>
       <div className="animate-fade-in">
@@ -222,41 +192,25 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        {/* Company OKRs Section */}
+        {/* Company OKRs Section (Read-Only) */}
         <Card className="mb-6 overflow-hidden border-0 shadow-sm">
           <div className="h-1.5 bg-deepip-primary"></div>
           <CardContent className="p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-bold text-deepip-primary">Company Objectives & Key Results</h2>
-              <Button 
-                size="sm" 
-                className="bg-deepip-primary text-white hover:bg-deepip-primary/90 flex items-center gap-1"
-                onClick={handleAddCompanyObjective}
-              >
-                <Plus size={16} />
-                Add Company Objective
-              </Button>
-            </div>
-            
-            {companyObjectives.length > 0 ? (
-              <ObjectiveList 
-                objectives={companyObjectives} 
-                users={users}
-                onUpdate={handleCompanyObjectivesUpdate}
-              />
-            ) : (
-              <div className="flex flex-col items-center justify-center py-8 border border-dashed rounded-md">
-                <p className="text-gray-500 mb-2">No company objectives defined</p>
+              <Link to="/company">
                 <Button 
-                  variant="outline" 
-                  onClick={handleAddCompanyObjective}
+                  variant="outline"
+                  size="sm" 
                   className="flex items-center gap-1"
                 >
-                  <Plus size={16} />
-                  Add Company Objective
+                  Manage Company OKRs
+                  <ArrowRight size={16} />
                 </Button>
-              </div>
-            )}
+              </Link>
+            </div>
+            
+            <ReadOnlyCompanyObjectiveList objectives={companyObjectives} />
           </CardContent>
         </Card>
 

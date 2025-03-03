@@ -95,3 +95,16 @@ export type OKRCycle = {
   endDate: string; // ISO date string
   active: boolean;
 };
+
+// New simplified company key result type
+export type CompanyKeyResult = {
+  id: string;
+  title: string;
+  objectiveId: string;
+};
+
+export type CompanyObjective = {
+  id: string;
+  title: string;
+  keyResults: CompanyKeyResult[];
+};
