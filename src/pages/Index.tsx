@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { departments } from "@/data/departments";
 import { getObjectivesByDepartment } from "@/data/okrData";
@@ -16,12 +16,17 @@ const Index = () => {
     globalStartDate, 
     globalEndDate, 
     departmentStats: contextStats,
-    cycle
+    cycle,
+    objectives: allDepartmentObjectives,
+    refreshStats
   } = useOKR();
   
+  // Force a refresh when the component mounts to ensure latest data
   useEffect(() => {
     document.title = "OKR Dashboard | DeepIP";
-  }, []);
+    // Ensure we have the latest stats on initial render
+    refreshStats();
+  }, [refreshStats]);
 
   const formatDate = (dateString: string) => {
     try {
@@ -31,26 +36,77 @@ const Index = () => {
     }
   };
   
-  // Calculate overall company progress
-  const objectives = {
-    leadership: getObjectivesByDepartment('leadership'),
-    product: getObjectivesByDepartment('product'),
-    ai: getObjectivesByDepartment('ai'),
-    sales: getObjectivesByDepartment('sales'),
-    growth: getObjectivesByDepartment('growth'),
-  };
-  
-  const allObjectives = Object.values(objectives).flat();
-  const overallProgress = allObjectives.length > 0
-    ? Math.round(allObjectives.reduce((sum, obj) => sum + obj.progress, 0) / allObjectives.length)
-    : 0;
-  
-  // Calculate average time progress across departments
-  const avgTimeProgress = Object.values(contextStats).reduce((sum, stat) => sum + stat.timeProgress, 0) / 
-    Object.values(contextStats).length;
-  
-  // Use the first department's days remaining (they should all be the same with global dates)
-  const firstDeptStats = Object.values(contextStats)[0] || { daysRemaining: 0, totalDays: 0 };
+  // Use useMemo to calculate derived stats to prevent recalculation on every render
+  const { 
+    objectives,
+    overallProgress,
+    avgTimeProgress,
+    firstDeptStats,
+    statusCounts,
+    totalObjectives
+  } = useMemo(() => {
+    // Get all objectives from all departments using context instead of static data
+    const departmentObjectives = {
+      leadership: allDepartmentObjectives.leadership || [],
+      product: allDepartmentObjectives.product || [],
+      ai: allDepartmentObjectives.ai || [],
+      sales: allDepartmentObjectives.sales || [],
+      growth: allDepartmentObjectives.growth || [],
+    };
+    
+    // Flatten all objectives for calculations
+    const allObjectives = Object.values(departmentObjectives).flat();
+    
+    // Calculate overall company progress from all objectives
+    const calculatedOverallProgress = allObjectives.length > 0
+      ? Math.round(allObjectives.reduce((sum, obj) => sum + obj.progress, 0) / allObjectives.length)
+      : 0;
+    
+    // Calculate average time progress across departments
+    const calculatedAvgTimeProgress = Object.values(contextStats).reduce((sum, stat) => sum + stat.timeProgress, 0) / 
+      Object.values(contextStats).length;
+    
+    // Use the first department's days remaining (they should all be the same with global dates)
+    const calculatedFirstDeptStats = Object.values(contextStats)[0] || { daysRemaining: 0, totalDays: 0 };
+
+    // Calculate status counts for all key results
+    let onTrackCount = 0;
+    let atRiskCount = 0;
+    let offTrackCount = 0;
+    let totalCount = 0;
+
+    // Process all key results to count statuses
+    allObjectives.forEach(obj => {
+      obj.keyResults.forEach(kr => {
+        totalCount++;
+        if (kr.status === "On track" || kr.status === "Completed") {
+          onTrackCount++;
+        } else if (kr.status === "At Risk") {
+          atRiskCount++;
+        } else if (kr.status === "Off Track") {
+          offTrackCount++;
+        }
+      });
+    });
+
+    // Calculate percentages, avoid division by zero
+    const onTrackPercentage = totalCount > 0 ? Math.round((onTrackCount / totalCount) * 100) : 0;
+    const atRiskPercentage = totalCount > 0 ? Math.round((atRiskCount / totalCount) * 100) : 0;
+    const offTrackPercentage = totalCount > 0 ? Math.round((offTrackCount / totalCount) * 100) : 0;
+    
+    return {
+      objectives: departmentObjectives,
+      overallProgress: calculatedOverallProgress,
+      avgTimeProgress: calculatedAvgTimeProgress,
+      firstDeptStats: calculatedFirstDeptStats,
+      statusCounts: {
+        onTrack: onTrackPercentage,
+        atRisk: atRiskPercentage,
+        offTrack: offTrackPercentage
+      },
+      totalObjectives: allObjectives.length
+    };
+  }, [allDepartmentObjectives, contextStats]);
 
   return (
     <DashboardLayout>
@@ -101,7 +157,7 @@ const Index = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
           {departments.map((department) => {
-            const deptObjectives = getObjectivesByDepartment(department.id);
+            const deptObjectives = objectives[department.id] || [];
             const objectivesSummary = deptObjectives.map((obj) => ({
               title: obj.title,
               progress: obj.progress,
@@ -154,7 +210,7 @@ const Index = () => {
                       <div className="flex-1 ml-4">
                         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                           <div 
-                            className="h-full rounded-full transition-all duration-1000 ease-out"
+                            className="h-full rounded-full transition-none"
                             style={{ 
                               width: `${contextStats[dept.id].overallProgress}%`,
                               backgroundColor: dept.color
@@ -175,19 +231,19 @@ const Index = () => {
                 <div className="grid grid-cols-2 gap-4">
                   <Card className="p-4 border shadow-sm">
                     <p className="text-sm text-gray-500">Total Objectives</p>
-                    <p className="text-2xl font-medium">{allObjectives.length}</p>
+                    <p className="text-2xl font-medium">{totalObjectives}</p>
                   </Card>
                   <Card className="p-4 border shadow-sm">
                     <p className="text-sm text-gray-500">On Track</p>
-                    <p className="text-2xl font-medium text-green-600">68%</p>
+                    <p className="text-2xl font-medium text-green-600">{statusCounts.onTrack}%</p>
                   </Card>
                   <Card className="p-4 border shadow-sm">
                     <p className="text-sm text-gray-500">At Risk</p>
-                    <p className="text-2xl font-medium text-yellow-600">22%</p>
+                    <p className="text-2xl font-medium text-yellow-600">{statusCounts.atRisk}%</p>
                   </Card>
                   <Card className="p-4 border shadow-sm">
                     <p className="text-sm text-gray-500">Off Track</p>
-                    <p className="text-2xl font-medium text-red-600">10%</p>
+                    <p className="text-2xl font-medium text-red-600">{statusCounts.offTrack}%</p>
                   </Card>
                 </div>
               </div>

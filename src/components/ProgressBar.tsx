@@ -17,14 +17,15 @@ const ProgressBar = ({
   size = "md",
   variant = "default",
   showLabel = false,
-  animate = true,
+  animate = false, // Default to no animation
 }: ProgressBarProps) => {
   const barRef = useRef<HTMLDivElement>(null);
   
   // Use useEffect to update the width directly, bypassing React's transition animations
   useEffect(() => {
     if (barRef.current) {
-      // Apply width directly to the DOM to avoid animation flicker
+      // Apply width directly to the DOM without any transitions
+      barRef.current.style.transition = "none";
       barRef.current.style.width = `${value}%`;
     }
   }, [value]);
@@ -68,10 +69,13 @@ const ProgressBar = ({
           className={cn(
             getColorClass(),
             getHeightClass(),
-            animate ? "transition-none" : "transition-none",
+            "transition-none", // Always disable transitions
             "rounded-full"
           )}
-          style={{ width: `${value}%` }}
+          style={{
+            width: `${value}%`,
+            transition: "none" // Force no transitions at the style level
+          }}
         />
       </div>
     </div>
