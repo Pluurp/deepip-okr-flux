@@ -1,12 +1,12 @@
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
-import { Objective, DepartmentId, CompanyObjective, CompanyKeyResult } from '@/types';
+import { Objective, DepartmentId } from '@/types';
 import { getObjectivesByDepartment, departmentStats as initialDepartmentStats } from '@/data/okrData';
 import { calculateObjectiveProgress, calculateTimeProgress, calculateDaysRemaining, calculateTotalDays } from '@/utils/okrUtils';
 
 type OKRContextType = {
   objectives: Record<DepartmentId, Objective[]>;
-  departmentStats: typeof stableInitialDepartmentStats;
+  departmentStats: typeof initialDepartmentStats;
   updateObjectives: (departmentId: DepartmentId, updatedObjectives: Objective[]) => void;
   getObjectivesForDepartment: (departmentId: DepartmentId) => Objective[];
   recalculateDepartmentStats: (departmentId: DepartmentId) => void;
@@ -19,8 +19,6 @@ type OKRContextType = {
   manualCurrentDate: string | null;
   updateManualCurrentDate: (date: string | null) => void;
   getCurrentDate: () => Date;
-  companyObjectives: CompanyObjective[];
-  updateCompanyObjectives: (updatedObjectives: CompanyObjective[]) => void;
 };
 
 const OKRContext = createContext<OKRContextType | undefined>(undefined);
@@ -45,9 +43,6 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const [departmentStats, setDepartmentStats] = useState({ ...stableInitialDepartmentStats });
-  
-  // Company objectives state
-  const [companyObjectives, setCompanyObjectives] = useState<CompanyObjective[]>([]);
   
   // Set up global cycle (for all departments)
   const [cycle, setCycle] = useState<string>("Q1");
@@ -89,13 +84,6 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
   
   // Force a rerender
   const forceUpdate = useCallback(() => {
-    setForceUpdateCounter(prev => prev + 1);
-  }, []);
-
-  // Create a memoized updateCompanyObjectives function
-  const updateCompanyObjectives = useCallback((updatedObjectives: CompanyObjective[]) => {
-    setCompanyObjectives(updatedObjectives);
-    // Force a refresh after updating company objectives
     setForceUpdateCounter(prev => prev + 1);
   }, []);
 
@@ -188,11 +176,6 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
       return updatedObjectives;
     });
     
-    // Update company objectives with new dates
-    setCompanyObjectives(prevCompanyObjectives => {
-      return prevCompanyObjectives.map(obj => ({ ...obj, startDate, endDate }));
-    });
-    
     // Force an immediate refresh
     setForceUpdateCounter(prev => prev + 1);
   }, []);
@@ -211,11 +194,6 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
         growth: prevObjectives.growth.map(obj => ({ ...obj, cycle: newCycle })),
       };
       return updatedObjectives;
-    });
-    
-    // Update company objectives with new cycle
-    setCompanyObjectives(prevCompanyObjectives => {
-      return prevCompanyObjectives.map(obj => ({ ...obj, cycle: newCycle }));
     });
     
     // Force an immediate refresh
@@ -293,16 +271,6 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
       setManualCurrentDate(savedManualCurrentDate);
     }
     
-    // Load company objectives from localStorage
-    const savedCompanyObjectives = localStorage.getItem('okr_company_objectives');
-    if (savedCompanyObjectives) {
-      try {
-        setCompanyObjectives(JSON.parse(savedCompanyObjectives));
-      } catch (e) {
-        console.error('Failed to parse saved company objectives', e);
-      }
-    }
-    
     // Force an initial stats refresh after loading
     setForceUpdateCounter(prev => prev + 1);
   }, []);
@@ -335,11 +303,6 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     localStorage.setItem('okr_cycle', cycle);
   }, [cycle]);
-  
-  // Save company objectives to localStorage
-  useEffect(() => {
-    localStorage.setItem('okr_company_objectives', JSON.stringify(companyObjectives));
-  }, [companyObjectives]);
   
   // Save manual current date to localStorage
   useEffect(() => {
@@ -385,9 +348,7 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     updateCycle,
     manualCurrentDate,
     updateManualCurrentDate,
-    getCurrentDate,
-    companyObjectives,
-    updateCompanyObjectives
+    getCurrentDate
   }), [
     objectives,
     departmentStats,
@@ -402,9 +363,7 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     updateCycle,
     manualCurrentDate,
     updateManualCurrentDate,
-    getCurrentDate,
-    companyObjectives,
-    updateCompanyObjectives
+    getCurrentDate
   ]);
 
   return (
