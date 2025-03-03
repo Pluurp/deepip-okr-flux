@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Objective, KeyResult, User, Status } from "@/types";
 import ProgressBar from "./ProgressBar";
@@ -207,31 +206,6 @@ const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveList
     toast.success("Objective deleted");
   };
 
-  const handleDateSelect = (date: Date | undefined) => {
-    if (!date || !selectedObjective || !onUpdate) return;
-    
-    const updatedObjectives = objectives.map(obj => {
-      if (obj.id === selectedObjective) {
-        return {
-          ...obj,
-          [dateType === "start" ? "startDate" : "endDate"]: date.toISOString()
-        };
-      }
-      return obj;
-    });
-    
-    onUpdate(updatedObjectives);
-    toast.success(`${dateType === "start" ? "Start" : "End"} date updated`);
-    
-    // Reset selection
-    setSelectedObjective(null);
-  };
-
-  const openDatePicker = (objectiveId: string, type: "start" | "end") => {
-    setSelectedObjective(objectiveId);
-    setDateType(type);
-  };
-
   return (
     <div className={cn("space-y-8", className)}>
       {objectives.map((objective) => (
@@ -253,64 +227,8 @@ const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveList
             <ProgressBar value={objective.progress} className="mt-2" />
             
             <div className="flex justify-between items-center mt-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">Start Date:</span>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8"
-                        onClick={() => openDatePicker(objective.id, "start")}
-                      >
-                        {objective.startDate 
-                          ? format(new Date(objective.startDate), "PPP") 
-                          : "Select date"}
-                        <Calendar className="ml-2 h-4 w-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      {selectedObjective === objective.id && dateType === "start" && (
-                        <CalendarComponent
-                          mode="single"
-                          selected={objective.startDate ? new Date(objective.startDate) : undefined}
-                          onSelect={handleDateSelect}
-                          initialFocus
-                        />
-                      )}
-                    </PopoverContent>
-                  </Popover>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-gray-500">End Date:</span>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="h-8"
-                        onClick={() => openDatePicker(objective.id, "end")}
-                      >
-                        {objective.endDate 
-                          ? format(new Date(objective.endDate), "PPP") 
-                          : "Select date"}
-                        <Calendar className="ml-2 h-4 w-4" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      {selectedObjective === objective.id && dateType === "end" && (
-                        <CalendarComponent
-                          mode="single"
-                          selected={objective.endDate ? new Date(objective.endDate) : undefined}
-                          onSelect={handleDateSelect}
-                          initialFocus
-                        />
-                      )}
-                    </PopoverContent>
-                  </Popover>
-                </div>
+              <div>
+                {/* Date fields have been removed */}
               </div>
               
               <div className="flex gap-2">
