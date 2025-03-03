@@ -1,3 +1,4 @@
+
 import { KeyResult, Objective, DepartmentId, Status } from "@/types";
 
 /**
@@ -38,7 +39,7 @@ export const getStatusFromProgress = (progress: number): Status => {
 
 /**
  * Calculate time progress based on start and end dates
- * FIXED: Now properly includes both start and end dates in the range
+ * This function now correctly includes both start and end dates in the range
  */
 export const calculateTimeProgress = (startDate: string, endDate: string, currentDate: Date = new Date()): number => {
   const start = new Date(startDate);
@@ -77,7 +78,7 @@ export const calculateTimeProgress = (startDate: string, endDate: string, curren
 
 /**
  * Calculate days remaining until end date
- * FIXED: Now includes the end date in the calculation
+ * This function now correctly includes the end date in the calculation
  */
 export const calculateDaysRemaining = (endDate: string, currentDate: Date = new Date()): number => {
   const end = new Date(endDate);
@@ -96,7 +97,7 @@ export const calculateDaysRemaining = (endDate: string, currentDate: Date = new 
 
 /**
  * Calculate total days between start and end date (inclusive)
- * FIXED: Now correctly includes both the start and end dates
+ * This function now correctly includes both the start and end dates
  */
 export const calculateTotalDays = (startDate: string, endDate: string): number => {
   const start = new Date(startDate);

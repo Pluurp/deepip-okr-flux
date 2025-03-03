@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -61,6 +61,7 @@ const Settings = () => {
     document.title = "Settings | DeepIP OKRs";
   }, []);
   
+  // Update local state when context values change
   useEffect(() => {
     setStartDate(new Date(globalStartDate));
     setEndDate(new Date(globalEndDate));
@@ -105,7 +106,8 @@ const Settings = () => {
     setHasChanges(true);
   };
   
-  const handleSaveChanges = () => {
+  // Optimized save changes function to ensure synchronous updates
+  const handleSaveChanges = useCallback(() => {
     if (!startDate || !endDate) {
       toast.error("Start and end dates are required");
       return;
@@ -121,25 +123,24 @@ const Settings = () => {
     updateCycle(selectedCycle);
     
     // Force an immediate stats refresh
-    setTimeout(() => {
-      refreshStats();
-      
-      // Show success toast after refresh
-      toast.success("Settings updated successfully");
-      setHasChanges(false);
-    }, 50);
-  };
+    refreshStats();
+    
+    // Show success toast
+    toast.success("Settings updated successfully");
+    setHasChanges(false);
+  }, [startDate, endDate, overrideDate, selectedCycle, updateManualCurrentDate, updateGlobalDates, updateCycle, refreshStats]);
   
-  const applyChangesImmediately = () => {
+  // Apply changes immediately
+  const applyChangesImmediately = useCallback(() => {
     if (hasChanges) {
       handleSaveChanges();
     }
-  };
+  }, [hasChanges, handleSaveChanges]);
   
-  const resetToSystemDate = () => {
+  const resetToSystemDate = useCallback(() => {
     setOverrideDate(undefined);
     setHasChanges(true);
-  };
+  }, []);
   
   const formatDate = (date: Date | undefined) => {
     if (!date) return "Select date";
