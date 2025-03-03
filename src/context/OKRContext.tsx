@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Objective, DepartmentId } from '@/types';
 import { getObjectivesByDepartment, departmentStats as initialDepartmentStats } from '@/data/okrData';
@@ -16,6 +15,9 @@ type OKRContextType = {
   refreshStats: () => void;
   cycle: string;
   updateCycle: (newCycle: string) => void;
+  manualCurrentDate: string | null;
+  updateManualCurrentDate: (date: string | null) => void;
+  getCurrentDate: () => Date;
 };
 
 const OKRContext = createContext<OKRContextType | undefined>(undefined);
@@ -55,6 +57,24 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
       return endDate.toISOString();
     }
   });
+
+  // Add manual current date state
+  const [manualCurrentDate, setManualCurrentDate] = useState<string | null>(null);
+
+  // Function to get the current date (manual or system)
+  const getCurrentDate = (): Date => {
+    if (manualCurrentDate) {
+      return new Date(manualCurrentDate);
+    }
+    return new Date();
+  };
+
+  // Update manual current date
+  const updateManualCurrentDate = (date: string | null) => {
+    setManualCurrentDate(date);
+    // After updating the date, refresh all stats to reflect the change
+    refreshStats();
+  };
 
   // Load from localStorage on mount
   useEffect(() => {
@@ -101,6 +121,11 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     if (savedCycle) {
       setCycle(savedCycle);
     }
+    
+    const savedManualCurrentDate = localStorage.getItem('okr_manual_current_date');
+    if (savedManualCurrentDate) {
+      setManualCurrentDate(savedManualCurrentDate);
+    }
   }, []);
 
   // Save to localStorage whenever objectives change
@@ -123,6 +148,15 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     localStorage.setItem('okr_cycle', cycle);
   }, [cycle]);
+  
+  // Save manual current date to localStorage
+  useEffect(() => {
+    if (manualCurrentDate) {
+      localStorage.setItem('okr_manual_current_date', manualCurrentDate);
+    } else {
+      localStorage.removeItem('okr_manual_current_date');
+    }
+  }, [manualCurrentDate]);
   
   // Automatically refresh stats once per day
   useEffect(() => {
@@ -206,14 +240,38 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     const startDate = globalStartDate;
     const endDate = globalEndDate;
 
-    // Calculate time progress
-    const timeProgress = calculateTimeProgress(startDate, endDate);
+    // Get the current date (manual or system)
+    const currentDate = getCurrentDate();
+
+    // Calculate time progress using the current date
+    const start = new Date(startDate).getTime();
+    const end = new Date(endDate).getTime();
+    const now = currentDate.getTime();
+    
+    // If the date range is invalid, use default values
+    if (end <= start) {
+      setDepartmentStats(prev => ({
+        ...prev,
+        [departmentId]: {
+          daysRemaining: 0,
+          totalDays: 0,
+          timeProgress: 0,
+          overallProgress
+        }
+      }));
+      return;
+    }
+    
+    // Calculate percentage
+    const totalTime = end - start;
+    const elapsedTime = now - start;
+    const timeProgress = Math.min(Math.max((elapsedTime / totalTime) * 100, 0), 100);
     
     // Calculate days remaining
-    const daysRemaining = calculateDaysRemaining(endDate);
+    const daysRemaining = Math.max(Math.ceil((end - now) / (1000 * 60 * 60 * 24)), 0);
     
     // Calculate total days
-    const totalDays = calculateTotalDays(startDate, endDate);
+    const totalDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
 
     setDepartmentStats(prev => ({
       ...prev,
@@ -239,7 +297,10 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
         updateGlobalDates,
         refreshStats,
         cycle,
-        updateCycle
+        updateCycle,
+        manualCurrentDate,
+        updateManualCurrentDate,
+        getCurrentDate
       }}
     >
       {children}

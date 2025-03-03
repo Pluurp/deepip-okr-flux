@@ -41,10 +41,10 @@ export const getStatusFromProgress = (progress: number): Status => {
  * Calculate time progress based on start and end dates
  * This automatically uses today's date for calculations
  */
-export const calculateTimeProgress = (startDate: string, endDate: string): number => {
+export const calculateTimeProgress = (startDate: string, endDate: string, currentDate: Date = new Date()): number => {
   const start = new Date(startDate).getTime();
   const end = new Date(endDate).getTime();
-  const now = new Date().getTime();
+  const now = currentDate.getTime();
   
   // If the date range is invalid, return 0
   if (end <= start) return 0;
@@ -62,9 +62,9 @@ export const calculateTimeProgress = (startDate: string, endDate: string): numbe
  * Calculate days remaining until end date
  * This automatically uses today's date for calculations
  */
-export const calculateDaysRemaining = (endDate: string): number => {
+export const calculateDaysRemaining = (endDate: string, currentDate: Date = new Date()): number => {
   const end = new Date(endDate).getTime();
-  const now = new Date().getTime();
+  const now = currentDate.getTime();
   
   const daysRemaining = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
   
