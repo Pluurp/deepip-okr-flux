@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { Objective, DepartmentId } from '@/types';
 import { getObjectivesByDepartment, departmentStats as initialDepartmentStats } from '@/data/okrData';
@@ -56,7 +55,18 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     const savedObjectives = localStorage.getItem('okr_objectives');
     if (savedObjectives) {
       try {
-        setObjectives(JSON.parse(savedObjectives));
+        const parsedObjectives = JSON.parse(savedObjectives);
+        
+        // Ensure all required department IDs exist
+        const initializedObjectives: Record<DepartmentId, Objective[]> = {
+          leadership: parsedObjectives.leadership || [],
+          product: parsedObjectives.product || [],
+          ai: parsedObjectives.ai || [],
+          sales: parsedObjectives.sales || [],
+          growth: parsedObjectives.growth || [],
+        };
+        
+        setObjectives(initializedObjectives);
       } catch (e) {
         console.error('Failed to parse saved objectives', e);
       }
@@ -131,16 +141,13 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     setGlobalEndDate(endDate);
     
     // Update all objectives with new dates
-    const updatedObjectives: Record<DepartmentId, Objective[]> = {};
-    
-    Object.entries(objectives).forEach(([deptId, deptObjectives]) => {
-      const departmentId = deptId as DepartmentId;
-      updatedObjectives[departmentId] = deptObjectives.map(obj => ({
-        ...obj,
-        startDate,
-        endDate
-      }));
-    });
+    const updatedObjectives: Record<DepartmentId, Objective[]> = {
+      leadership: objectives.leadership.map(obj => ({ ...obj, startDate, endDate })),
+      product: objectives.product.map(obj => ({ ...obj, startDate, endDate })),
+      ai: objectives.ai.map(obj => ({ ...obj, startDate, endDate })),
+      sales: objectives.sales.map(obj => ({ ...obj, startDate, endDate })),
+      growth: objectives.growth.map(obj => ({ ...obj, startDate, endDate })),
+    };
     
     setObjectives(updatedObjectives);
     
