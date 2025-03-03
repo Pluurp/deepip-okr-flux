@@ -1,5 +1,5 @@
 
-import { KeyResult, Objective } from "@/types";
+import { KeyResult, Objective, DepartmentId, Status } from "@/types";
 
 /**
  * Calculate progress percentage based on start, target and current values
@@ -28,6 +28,49 @@ export const calculateObjectiveProgress = (keyResults: KeyResult[]): number => {
 };
 
 /**
+ * Determine status based on progress percentage
+ */
+export const getStatusFromProgress = (progress: number): Status => {
+  if (progress >= 100) return "Completed";
+  if (progress >= 80) return "On track";
+  if (progress >= 50) return "At Risk";
+  return "Off Track";
+};
+
+/**
+ * Calculate time progress based on start and end dates
+ */
+export const calculateTimeProgress = (startDate: string, endDate: string): number => {
+  const start = new Date(startDate).getTime();
+  const end = new Date(endDate).getTime();
+  const now = new Date().getTime();
+  
+  // If the date range is invalid, return 0
+  if (end <= start) return 0;
+  
+  // Calculate percentage
+  const totalTime = end - start;
+  const elapsedTime = now - start;
+  const progress = (elapsedTime / totalTime) * 100;
+  
+  // Clamp between 0 and 100
+  return Math.min(Math.max(progress, 0), 100);
+};
+
+/**
+ * Calculate days remaining until end date
+ */
+export const calculateDaysRemaining = (endDate: string): number => {
+  const end = new Date(endDate).getTime();
+  const now = new Date().getTime();
+  
+  const daysRemaining = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+  
+  // Return 0 if the end date has passed
+  return Math.max(daysRemaining, 0);
+};
+
+/**
  * Creates a new key result with default values
  */
 export const createNewKeyResult = (objectiveId: string, ownerId: string): KeyResult => {
@@ -49,8 +92,16 @@ export const createNewKeyResult = (objectiveId: string, ownerId: string): KeyRes
 /**
  * Creates a new objective with default values
  */
-export const createNewObjective = (departmentId: string, ownerId: string): Objective => {
+export const createNewObjective = (departmentId: DepartmentId, ownerId: string): Objective => {
   const objectiveId = `obj-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  
+  // Calculate default dates (current quarter)
+  const now = new Date();
+  const startDate = now.toISOString();
+  
+  // End date is 3 months from now
+  const endDate = new Date(now);
+  endDate.setMonth(endDate.getMonth() + 3);
   
   return {
     id: objectiveId,
@@ -61,8 +112,8 @@ export const createNewObjective = (departmentId: string, ownerId: string): Objec
       createNewKeyResult(objectiveId, ownerId)
     ],
     cycle: "Q1",
-    startDate: new Date().toISOString(),
-    endDate: new Date(new Date().setMonth(new Date().getMonth() + 3)).toISOString(),
+    startDate: startDate,
+    endDate: endDate.toISOString(),
     ownerId
   };
 };

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { Objective, KeyResult, User, Status } from "@/types";
 import ProgressBar from "./ProgressBar";
 import { cn } from "@/lib/utils";
@@ -7,9 +7,12 @@ import EditableText from "./EditableText";
 import EditableNumber from "./EditableNumber";
 import EditableSelect from "./EditableSelect";
 import { Button } from "./ui/button";
-import { PlusCircle, Trash2 } from "lucide-react";
-import { calculateProgress, createNewKeyResult } from "@/utils/okrUtils";
+import { PlusCircle, Trash2, Calendar } from "lucide-react";
+import { calculateProgress, createNewKeyResult, getStatusFromProgress } from "@/utils/okrUtils";
 import { toast } from "sonner";
+import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Calendar as CalendarComponent } from "./ui/calendar";
 
 type ObjectiveListProps = {
   objectives: Objective[];
@@ -19,6 +22,9 @@ type ObjectiveListProps = {
 };
 
 const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveListProps) => {
+  const [selectedObjective, setSelectedObjective] = useState<string | null>(null);
+  const [dateType, setDateType] = useState<"start" | "end">("start");
+
   const getOwnerName = (ownerId: string) => {
     const owner = users.find(user => user.id === ownerId);
     return owner ? owner.name : "Unassigned";
@@ -82,6 +88,9 @@ const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveList
               updatedKr.targetValue, 
               updatedKr.currentValue
             );
+            
+            // Automatically update status based on progress
+            updatedKr.status = getStatusFromProgress(updatedKr.progress);
             
             return updatedKr;
           }
@@ -198,6 +207,31 @@ const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveList
     toast.success("Objective deleted");
   };
 
+  const handleDateSelect = (date: Date | undefined) => {
+    if (!date || !selectedObjective || !onUpdate) return;
+    
+    const updatedObjectives = objectives.map(obj => {
+      if (obj.id === selectedObjective) {
+        return {
+          ...obj,
+          [dateType === "start" ? "startDate" : "endDate"]: date.toISOString()
+        };
+      }
+      return obj;
+    });
+    
+    onUpdate(updatedObjectives);
+    toast.success(`${dateType === "start" ? "Start" : "End"} date updated`);
+    
+    // Reset selection
+    setSelectedObjective(null);
+  };
+
+  const openDatePicker = (objectiveId: string, type: "start" | "end") => {
+    setSelectedObjective(objectiveId);
+    setDateType(type);
+  };
+
   return (
     <div className={cn("space-y-8", className)}>
       {objectives.map((objective) => (
@@ -217,25 +251,88 @@ const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveList
               </div>
             </div>
             <ProgressBar value={objective.progress} className="mt-2" />
-            <div className="flex justify-between mt-4">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="flex items-center gap-1"
-                onClick={() => handleAddKeyResult(objective)}
-              >
-                <PlusCircle size={16} />
-                Add Key Result
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
-                onClick={() => handleDeleteObjective(objective)}
-              >
-                <Trash2 size={16} />
-                Delete Objective
-              </Button>
+            
+            <div className="flex justify-between items-center mt-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">Start Date:</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-8"
+                        onClick={() => openDatePicker(objective.id, "start")}
+                      >
+                        {objective.startDate 
+                          ? format(new Date(objective.startDate), "PPP") 
+                          : "Select date"}
+                        <Calendar className="ml-2 h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      {selectedObjective === objective.id && dateType === "start" && (
+                        <CalendarComponent
+                          mode="single"
+                          selected={objective.startDate ? new Date(objective.startDate) : undefined}
+                          onSelect={handleDateSelect}
+                          initialFocus
+                        />
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-500">End Date:</span>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="h-8"
+                        onClick={() => openDatePicker(objective.id, "end")}
+                      >
+                        {objective.endDate 
+                          ? format(new Date(objective.endDate), "PPP") 
+                          : "Select date"}
+                        <Calendar className="ml-2 h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      {selectedObjective === objective.id && dateType === "end" && (
+                        <CalendarComponent
+                          mode="single"
+                          selected={objective.endDate ? new Date(objective.endDate) : undefined}
+                          onSelect={handleDateSelect}
+                          initialFocus
+                        />
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="flex items-center gap-1"
+                  onClick={() => handleAddKeyResult(objective)}
+                >
+                  <PlusCircle size={16} />
+                  Add Key Result
+                </Button>
+                <Button 
+                  variant="outline" 
+                  size="sm"
+                  className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  onClick={() => handleDeleteObjective(objective)}
+                >
+                  <Trash2 size={16} />
+                  Delete Objective
+                </Button>
+              </div>
             </div>
           </div>
           

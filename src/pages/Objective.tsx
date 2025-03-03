@@ -2,35 +2,49 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { objectives as allObjectives, getUserById, users } from "@/data/okrData";
+import { getUserById, users } from "@/data/okrData";
 import { getDepartmentById } from "@/data/departments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProgressBar from "@/components/ProgressBar";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, PlusCircle, Trash2 } from "lucide-react";
+import { ChevronLeft, PlusCircle, Trash2, Calendar } from "lucide-react";
 import { KeyResult, Objective as ObjectiveType, Status } from "@/types";
 import EditableText from "@/components/EditableText";
 import EditableNumber from "@/components/EditableNumber";
 import EditableSelect from "@/components/EditableSelect";
-import { calculateProgress, createNewKeyResult } from "@/utils/okrUtils";
+import { calculateProgress, createNewKeyResult, getStatusFromProgress } from "@/utils/okrUtils";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useOKR } from "@/context/OKRContext";
+import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar as CalendarComponent } from "@/components/ui/calendar";
 
 const Objective = () => {
   const { id } = useParams<{ id: string }>();
-  const [objective, setObjective] = useState<ObjectiveType | undefined>(
-    allObjectives.find(obj => obj.id === id)
-  );
+  const { objectives, updateObjectives } = useOKR();
+  
+  // Find objective in all departments
+  const [objective, setObjective] = useState<ObjectiveType | undefined>();
+  const [dateType, setDateType] = useState<"start" | "end">("start");
   
   useEffect(() => {
-    if (objective) {
-      document.title = `${objective.title} | DeepIP OKRs`;
+    // Look for the objective in all departments
+    let foundObjective: ObjectiveType | undefined;
+    
+    Object.values(objectives).forEach(departmentObjectives => {
+      const found = departmentObjectives.find(obj => obj.id === id);
+      if (found) {
+        foundObjective = found;
+      }
+    });
+    
+    setObjective(foundObjective);
+    
+    if (foundObjective) {
+      document.title = `${foundObjective.title} | DeepIP OKRs`;
     }
-  }, [objective]);
-
-  useEffect(() => {
-    setObjective(allObjectives.find(obj => obj.id === id));
-  }, [id]);
+  }, [id, objectives]);
 
   if (!objective) {
     return (
@@ -64,7 +78,16 @@ const Objective = () => {
   };
 
   const handleTitleChange = (newTitle: string) => {
-    setObjective(prev => prev ? { ...prev, title: newTitle } : prev);
+    const updatedObjective = { ...objective, title: newTitle };
+    setObjective(updatedObjective);
+    
+    // Update in context
+    const departmentObjectives = objectives[objective.departmentId];
+    const updatedObjectives = departmentObjectives.map(obj => 
+      obj.id === objective.id ? updatedObjective : obj
+    );
+    
+    updateObjectives(objective.departmentId, updatedObjectives);
     toast.success("Objective title updated");
   };
 
@@ -75,7 +98,16 @@ const Objective = () => {
       kr.id === keyResult.id ? { ...kr, title: newTitle } : kr
     );
     
-    setObjective({ ...objective, keyResults: updatedKeyResults });
+    const updatedObjective = { ...objective, keyResults: updatedKeyResults };
+    setObjective(updatedObjective);
+    
+    // Update in context
+    const departmentObjectives = objectives[objective.departmentId];
+    const updatedObjectives = departmentObjectives.map(obj => 
+      obj.id === objective.id ? updatedObjective : obj
+    );
+    
+    updateObjectives(objective.departmentId, updatedObjectives);
     toast.success("Key result title updated");
   };
 
@@ -93,6 +125,9 @@ const Objective = () => {
           updatedKr.currentValue
         );
         
+        // Automatically update status based on progress
+        updatedKr.status = getStatusFromProgress(updatedKr.progress);
+        
         return updatedKr;
       }
       return kr;
@@ -103,12 +138,21 @@ const Objective = () => {
       updatedKeyResults.reduce((sum, kr) => sum + kr.progress, 0) / updatedKeyResults.length
     );
     
-    setObjective({ 
+    const updatedObjective = { 
       ...objective, 
       keyResults: updatedKeyResults,
       progress: objProgress
-    });
+    };
     
+    setObjective(updatedObjective);
+    
+    // Update in context
+    const departmentObjectives = objectives[objective.departmentId];
+    const updatedObjectives = departmentObjectives.map(obj => 
+      obj.id === objective.id ? updatedObjective : obj
+    );
+    
+    updateObjectives(objective.departmentId, updatedObjectives);
     toast.success(`Key result ${field.replace('Value', '')} updated`);
   };
 
@@ -119,7 +163,16 @@ const Objective = () => {
       kr.id === keyResult.id ? { ...kr, ownerId } : kr
     );
     
-    setObjective({ ...objective, keyResults: updatedKeyResults });
+    const updatedObjective = { ...objective, keyResults: updatedKeyResults };
+    setObjective(updatedObjective);
+    
+    // Update in context
+    const departmentObjectives = objectives[objective.departmentId];
+    const updatedObjectives = departmentObjectives.map(obj => 
+      obj.id === objective.id ? updatedObjective : obj
+    );
+    
+    updateObjectives(objective.departmentId, updatedObjectives);
     toast.success("Key result owner updated");
   };
 
@@ -130,7 +183,16 @@ const Objective = () => {
       kr.id === keyResult.id ? { ...kr, status: status as Status } : kr
     );
     
-    setObjective({ ...objective, keyResults: updatedKeyResults });
+    const updatedObjective = { ...objective, keyResults: updatedKeyResults };
+    setObjective(updatedObjective);
+    
+    // Update in context
+    const departmentObjectives = objectives[objective.departmentId];
+    const updatedObjectives = departmentObjectives.map(obj => 
+      obj.id === objective.id ? updatedObjective : obj
+    );
+    
+    updateObjectives(objective.departmentId, updatedObjectives);
     toast.success("Key result status updated");
   };
 
@@ -139,11 +201,20 @@ const Objective = () => {
     
     const newKeyResult = createNewKeyResult(objective.id, objective.ownerId);
     
-    setObjective({
+    const updatedObjective = {
       ...objective,
       keyResults: [...objective.keyResults, newKeyResult]
-    });
+    };
     
+    setObjective(updatedObjective);
+    
+    // Update in context
+    const departmentObjectives = objectives[objective.departmentId];
+    const updatedObjectives = departmentObjectives.map(obj => 
+      obj.id === objective.id ? updatedObjective : obj
+    );
+    
+    updateObjectives(objective.departmentId, updatedObjectives);
     toast.success("New key result added");
   };
 
@@ -163,13 +234,50 @@ const Objective = () => {
       updatedKeyResults.reduce((sum, kr) => sum + kr.progress, 0) / updatedKeyResults.length
     );
     
-    setObjective({ 
+    const updatedObjective = { 
       ...objective, 
       keyResults: updatedKeyResults,
       progress: objProgress
-    });
+    };
     
+    setObjective(updatedObjective);
+    
+    // Update in context
+    const departmentObjectives = objectives[objective.departmentId];
+    const updatedObjectives = departmentObjectives.map(obj => 
+      obj.id === objective.id ? updatedObjective : obj
+    );
+    
+    updateObjectives(objective.departmentId, updatedObjectives);
     toast.success("Key result deleted");
+  };
+
+  const handleDateChange = (date: Date | undefined, type: "start" | "end") => {
+    if (!date || !objective) return;
+    
+    const updatedObjective = {
+      ...objective,
+      [type === "start" ? "startDate" : "endDate"]: date.toISOString()
+    };
+    
+    setObjective(updatedObjective);
+    
+    // Update in context
+    const departmentObjectives = objectives[objective.departmentId];
+    const updatedObjectives = departmentObjectives.map(obj => 
+      obj.id === objective.id ? updatedObjective : obj
+    );
+    
+    updateObjectives(objective.departmentId, updatedObjectives);
+    toast.success(`${type === "start" ? "Start" : "End"} date updated`);
+  };
+
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "PPP");
+    } catch (e) {
+      return "Invalid date";
+    }
   };
 
   return (
@@ -220,11 +328,45 @@ const Objective = () => {
             <div className="grid grid-cols-2 gap-6 mb-6">
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">Start Date</p>
-                <p className="font-medium">{new Date(objective.startDate).toLocaleDateString()}</p>
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8">
+                        {objective.startDate ? formatDate(objective.startDate) : "Select date"}
+                        <Calendar className="ml-2 h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={objective.startDate ? new Date(objective.startDate) : undefined}
+                        onSelect={(date) => handleDateChange(date, "start")}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">End Date</p>
-                <p className="font-medium">{new Date(objective.endDate).toLocaleDateString()}</p>
+                <div className="flex items-center gap-2">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" size="sm" className="h-8">
+                        {objective.endDate ? formatDate(objective.endDate) : "Select date"}
+                        <Calendar className="ml-2 h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <CalendarComponent
+                        mode="single"
+                        selected={objective.endDate ? new Date(objective.endDate) : undefined}
+                        onSelect={(date) => handleDateChange(date, "end")}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
             </div>
           </CardContent>

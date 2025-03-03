@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { getDepartmentById } from "@/data/departments";
-import { departmentStats, getObjectivesByDepartment, users } from "@/data/okrData";
+import { users } from "@/data/okrData";
 import ObjectiveList from "@/components/ObjectiveList";
 import ProgressBar from "@/components/ProgressBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -12,10 +12,20 @@ import { ChevronLeft, PlusCircle } from "lucide-react";
 import { Objective, DepartmentId } from "@/types";
 import { createNewObjective } from "@/utils/okrUtils";
 import { toast } from "sonner";
+import { useOKR } from "@/context/OKRContext";
+import { format } from "date-fns";
 
 const Department = () => {
   const { id } = useParams<{ id: string }>();
   const department = getDepartmentById(id || "");
+  
+  // Use our OKR context for persistent state
+  const { 
+    getObjectivesForDepartment, 
+    updateObjectives, 
+    departmentStats 
+  } = useOKR();
+  
   const [objectives, setObjectives] = useState<Objective[]>([]);
   
   useEffect(() => {
@@ -26,10 +36,11 @@ const Department = () => {
 
   useEffect(() => {
     if (id) {
-      const departmentObjectives = getObjectivesByDepartment(id as DepartmentId);
+      // Get objectives from our context
+      const departmentObjectives = getObjectivesForDepartment(id as DepartmentId);
       setObjectives(departmentObjectives);
     }
-  }, [id]);
+  }, [id, getObjectivesForDepartment]);
 
   if (!department || !id) {
     return (
@@ -48,6 +59,8 @@ const Department = () => {
 
   const handleObjectivesUpdate = (updatedObjectives: Objective[]) => {
     setObjectives(updatedObjectives);
+    // Update our persistent context
+    updateObjectives(id as DepartmentId, updatedObjectives);
     console.log("Objectives updated:", updatedObjectives);
   };
 
@@ -57,9 +70,30 @@ const Department = () => {
     const defaultOwnerId = departmentUser ? departmentUser.id : users[0].id;
     
     const newObjective = createNewObjective(id as DepartmentId, defaultOwnerId);
-    setObjectives(prev => [...prev, newObjective]);
+    const updatedObjectives = [...objectives, newObjective];
+    
+    setObjectives(updatedObjectives);
+    updateObjectives(id as DepartmentId, updatedObjectives);
+    
     toast.success("New objective added");
   };
+
+  // Format dates for display
+  const formatDate = (dateString: string) => {
+    try {
+      return format(new Date(dateString), "MMMM d, yyyy");
+    } catch (e) {
+      return "Invalid date";
+    }
+  };
+
+  const startDate = objectives[0]?.startDate 
+    ? formatDate(objectives[0].startDate)
+    : "January 1, 2025";
+    
+  const endDate = objectives[0]?.endDate 
+    ? formatDate(objectives[0].endDate)
+    : "March 31, 2025";
 
   return (
     <DashboardLayout>
@@ -90,15 +124,15 @@ const Department = () => {
             <div className="grid md:grid-cols-4 gap-6 mb-6">
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">Cycle</p>
-                <p className="font-medium">Q1</p>
+                <p className="font-medium">{objectives[0]?.cycle || "Q1"}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">Start Date</p>
-                <p className="font-medium">January 1, 2025</p>
+                <p className="font-medium">{startDate}</p>
               </div>
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">End Date</p>
-                <p className="font-medium">March 31, 2025</p>
+                <p className="font-medium">{endDate}</p>
               </div>
             </div>
 
