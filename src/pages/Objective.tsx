@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { objectives, getUserById, users } from "@/data/okrData";
@@ -7,10 +7,22 @@ import { getDepartmentById } from "@/data/departments";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import ProgressBar from "@/components/ProgressBar";
 import { ChevronLeft } from "lucide-react";
+import { KeyResult, Objective as ObjectiveType } from "@/types";
+import EditableText from "@/components/EditableText";
+import EditableNumber from "@/components/EditableNumber";
+import EditableSelect from "@/components/EditableSelect";
+import { 
+  calculateKeyResultProgress, 
+  calculateObjectiveProgress,
+  statusOptions, 
+  confidenceLevelOptions 
+} from "@/utils/okrUtils";
+import { toast } from "sonner";
 
 const Objective = () => {
   const { id } = useParams<{ id: string }>();
-  const objective = objectives.find(obj => obj.id === id);
+  const initialObjective = objectives.find(obj => obj.id === id);
+  const [objective, setObjective] = useState<ObjectiveType | undefined>(initialObjective);
   
   useEffect(() => {
     if (objective) {
@@ -49,6 +61,64 @@ const Objective = () => {
     }
   };
 
+  const updateObjectiveTitle = (newTitle: string) => {
+    if (!objective) return;
+    
+    setObjective(prev => {
+      if (!prev) return prev;
+      return { ...prev, title: newTitle };
+    });
+    toast.success("Objective title updated");
+  };
+
+  const updateKeyResult = (keyResultId: string, updates: Partial<KeyResult>) => {
+    if (!objective) return;
+    
+    setObjective(prev => {
+      if (!prev) return prev;
+      
+      const updatedKeyResults = prev.keyResults.map(kr => {
+        if (kr.id === keyResultId) {
+          const updatedKr = { ...kr, ...updates };
+          
+          // Recalculate progress if any of the values have changed
+          if (
+            updates.startValue !== undefined || 
+            updates.currentValue !== undefined || 
+            updates.targetValue !== undefined
+          ) {
+            updatedKr.progress = calculateKeyResultProgress(
+              updatedKr.startValue,
+              updatedKr.currentValue,
+              updatedKr.targetValue
+            );
+          }
+          
+          return updatedKr;
+        }
+        return kr;
+      });
+      
+      // Recalculate objective progress based on updated key results
+      const updatedProgress = calculateObjectiveProgress(updatedKeyResults);
+      
+      return { 
+        ...prev, 
+        keyResults: updatedKeyResults,
+        progress: updatedProgress 
+      };
+    });
+    
+    toast.success("Key result updated");
+  };
+
+  const userOptions = users.map(user => ({
+    value: user.id,
+    label: user.name
+  }));
+
+  const confidenceOptions = confidenceLevelOptions;
+
   return (
     <DashboardLayout>
       <div className="animate-fade-in">
@@ -64,7 +134,11 @@ const Objective = () => {
           ></div>
           <CardHeader className="pb-2">
             <CardTitle className="text-2xl font-bold">
-              {objective.title}
+              <EditableText 
+                value={objective.title} 
+                onChange={updateObjectiveTitle}
+                className="font-bold"
+              />
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
@@ -115,7 +189,13 @@ const Objective = () => {
                   <CardContent className="p-6">
                     <div className="flex flex-col lg:flex-row justify-between gap-4">
                       <div className="flex-1">
-                        <h3 className="text-lg font-medium mb-2">{kr.title}</h3>
+                        <h3 className="text-lg font-medium mb-2">
+                          <EditableText 
+                            value={kr.title} 
+                            onChange={(newTitle) => updateKeyResult(kr.id, { title: newTitle })}
+                            className="font-medium"
+                          />
+                        </h3>
                         
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
                           <div>
@@ -124,34 +204,67 @@ const Objective = () => {
                           </div>
                           <div>
                             <p className="text-sm text-gray-500">Owner</p>
-                            <p className="font-medium">{krOwner?.name}</p>
+                            <div className="font-medium">
+                              <EditableSelect
+                                value={kr.ownerId}
+                                options={userOptions}
+                                onChange={(newOwnerId) => updateKeyResult(kr.id, { ownerId: newOwnerId })}
+                              />
+                            </div>
                           </div>
                           <div>
                             <p className="text-sm text-gray-500">Status</p>
-                            <span 
-                              className={`inline-block px-2 py-0.5 rounded-full text-xs font-medium ${getStatusColor(kr.status)}`}
-                            >
-                              {kr.status}
-                            </span>
+                            <div>
+                              <EditableSelect
+                                value={kr.status}
+                                options={statusOptions}
+                                onChange={(newStatus) => updateKeyResult(kr.id, { status: newStatus as "Off Track" | "At Risk" | "On track" | "Completed" })}
+                                getStatusColor={getStatusColor}
+                              />
+                            </div>
                           </div>
                           <div>
                             <p className="text-sm text-gray-500">Confidence</p>
-                            <p className="font-medium">{kr.confidenceLevel}</p>
+                            <div className="font-medium">
+                              <EditableSelect
+                                value={kr.confidenceLevel}
+                                options={confidenceOptions}
+                                onChange={(newConfidence) => updateKeyResult(kr.id, { confidenceLevel: newConfidence as "Low" | "Medium" | "High" })}
+                              />
+                            </div>
                           </div>
                         </div>
                         
                         <div className="grid grid-cols-3 gap-4 mb-4">
                           <div>
                             <p className="text-sm text-gray-500">Start Value</p>
-                            <p className="font-medium">{kr.startValue}{kr.metric === 'Percentage' ? '%' : ''}</p>
+                            <div className="font-medium">
+                              <EditableNumber 
+                                value={kr.startValue}
+                                onChange={(newValue) => updateKeyResult(kr.id, { startValue: newValue })}
+                                suffix={kr.metric === 'Percentage' ? '%' : ''}
+                              />
+                            </div>
                           </div>
                           <div>
                             <p className="text-sm text-gray-500">Current Value</p>
-                            <p className="font-medium">{kr.currentValue}{kr.metric === 'Percentage' ? '%' : ''}</p>
+                            <div className="font-medium">
+                              <EditableNumber 
+                                value={kr.currentValue}
+                                onChange={(newValue) => updateKeyResult(kr.id, { currentValue: newValue })}
+                                suffix={kr.metric === 'Percentage' ? '%' : ''}
+                              />
+                            </div>
                           </div>
                           <div>
                             <p className="text-sm text-gray-500">Target Value</p>
-                            <p className="font-medium">{kr.targetValue}{kr.metric === 'Percentage' ? '%' : ''}</p>
+                            <div className="font-medium">
+                              <EditableNumber 
+                                value={kr.targetValue}
+                                onChange={(newValue) => updateKeyResult(kr.id, { targetValue: newValue })}
+                                suffix={kr.metric === 'Percentage' ? '%' : ''}
+                              />
+                            </div>
                           </div>
                         </div>
                       </div>

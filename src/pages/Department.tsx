@@ -1,5 +1,4 @@
-
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { getDepartmentById } from "@/data/departments";
@@ -9,16 +8,26 @@ import ProgressBar from "@/components/ProgressBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
+import { Objective } from "@/types";
+import { toast } from "sonner";
 
 const Department = () => {
   const { id } = useParams<{ id: string }>();
   const department = getDepartmentById(id || "");
+  const [objectives, setObjectives] = useState<Objective[]>([]);
   
   useEffect(() => {
     if (department) {
       document.title = `${department.name} | DeepIP OKRs`;
     }
   }, [department]);
+
+  useEffect(() => {
+    if (id) {
+      const departmentObjectives = getObjectivesByDepartment(id);
+      setObjectives(departmentObjectives);
+    }
+  }, [id]);
 
   if (!department || !id) {
     return (
@@ -34,7 +43,12 @@ const Department = () => {
   }
 
   const stats = departmentStats[id];
-  const objectives = getObjectivesByDepartment(id);
+
+  const handleObjectivesUpdate = (updatedObjectives: Objective[]) => {
+    setObjectives(updatedObjectives);
+    // In a real app, this would save to the database
+    console.log("Objectives updated:", updatedObjectives);
+  };
 
   return (
     <DashboardLayout>
@@ -48,15 +62,16 @@ const Department = () => {
           <div className="h-1.5" style={{ backgroundColor: department.color }}></div>
           <CardHeader className="pb-2">
             <CardTitle className="flex justify-between items-center">
-              <h1 className="text-2xl font-bold" style={{ color: department.color }}>
+              <span className="text-2xl font-bold" style={{ color: department.color }}>
                 {department.name}
-              </h1>
+              </span>
               <Button size="sm" className="bg-deepip-primary text-white hover:bg-deepip-primary/90">
                 Add Objective
               </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
+            
             <div className="grid md:grid-cols-4 gap-6 mb-6">
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">Cycle</p>
@@ -108,7 +123,11 @@ const Department = () => {
         </Card>
 
         <div className="mt-8 animate-slide-in">
-          <ObjectiveList objectives={objectives} users={users} />
+          <ObjectiveList 
+            objectives={objectives} 
+            users={users} 
+            onUpdate={handleObjectivesUpdate}
+          />
         </div>
       </div>
     </DashboardLayout>
