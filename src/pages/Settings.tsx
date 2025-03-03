@@ -111,17 +111,29 @@ const Settings = () => {
       return;
     }
     
+    // First update manual date to ensure it's available for calculations
+    if (overrideDate !== undefined) {
+      updateManualCurrentDate(overrideDate ? overrideDate.toISOString() : null);
+    }
+    
+    // Then update global dates and cycle
     updateGlobalDates(startDate.toISOString(), endDate.toISOString());
     updateCycle(selectedCycle);
     
-    // Update manual current date if set
-    updateManualCurrentDate(overrideDate ? overrideDate.toISOString() : null);
-    
-    // Force an immediate stats refresh to ensure synchronization
-    setTimeout(() => refreshStats(), 50);
-    
-    toast.success("Settings updated successfully");
-    setHasChanges(false);
+    // Force an immediate stats refresh
+    setTimeout(() => {
+      refreshStats();
+      
+      // Show success toast after refresh
+      toast.success("Settings updated successfully");
+      setHasChanges(false);
+    }, 50);
+  };
+  
+  const applyChangesImmediately = () => {
+    if (hasChanges) {
+      handleSaveChanges();
+    }
   };
   
   const resetToSystemDate = () => {
@@ -232,8 +244,13 @@ const Settings = () => {
             
             {hasChanges && startDate && endDate && (
               <Card className="p-4 mt-4 border border-yellow-200 bg-yellow-50">
-                <p className="text-sm font-medium text-yellow-800">Preview of changes (not yet saved):</p>
-                <div className="grid grid-cols-3 gap-4 mt-2">
+                <div className="flex justify-between items-center mb-2">
+                  <p className="text-sm font-medium text-yellow-800">Preview of changes (not yet saved):</p>
+                  <Button size="sm" variant="outline" className="text-xs" onClick={applyChangesImmediately}>
+                    Apply Now
+                  </Button>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
                   <div>
                     <p className="text-xs text-gray-500">Total Days</p>
                     <p className="font-medium">{previewStats.totalDays}</p>

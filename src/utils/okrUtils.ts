@@ -38,58 +38,76 @@ export const getStatusFromProgress = (progress: number): Status => {
 
 /**
  * Calculate time progress based on start and end dates
- * This will use the provided current date for calculations
- * FIXED: Now includes both start and end dates in the range
+ * FIXED: Now properly includes both start and end dates in the range
  */
 export const calculateTimeProgress = (startDate: string, endDate: string, currentDate: Date = new Date()): number => {
-  const start = new Date(startDate).getTime();
-  const end = new Date(endDate).getTime();
-  const now = currentDate.getTime();
+  const start = new Date(startDate);
+  start.setHours(0, 0, 0, 0);
   
-  // Include both start and end date in the range (add 1 day to end)
-  const endPlusOneDay = end + (24 * 60 * 60 * 1000);
+  const end = new Date(endDate);
+  end.setHours(23, 59, 59, 999);
   
-  // Calculate total days (including both start and end dates)
-  const totalDays = (endPlusOneDay - start) / (1000 * 60 * 60 * 24);
+  const now = new Date(currentDate);
+  now.setHours(12, 0, 0, 0);
   
-  // Calculate days passed since start date
-  const daysPassed = (now - start) / (1000 * 60 * 60 * 24);
+  // Calculate total milliseconds (inclusive of both start and end dates)
+  const totalMs = end.getTime() - start.getTime() + 1;
+  const totalDays = Math.ceil(totalMs / (1000 * 60 * 60 * 24));
   
-  // Calculate percentage of time passed
+  // Days passed (if today is start date, this should be 0)
+  if (now.getTime() <= start.getTime()) {
+    return 0;
+  }
+  
+  // If we're past the end date, return 100%
+  if (now.getTime() >= end.getTime()) {
+    return 100;
+  }
+  
+  // Calculate milliseconds passed since start date
+  const elapsedMs = now.getTime() - start.getTime();
+  const daysPassed = Math.floor(elapsedMs / (1000 * 60 * 60 * 24));
+  
+  // Calculate percentage of time passed (daysPassed / totalDays)
   const progress = (daysPassed / totalDays) * 100;
   
-  // Clamp between 0 and 100
-  return Math.min(Math.max(progress, 0), 100);
+  // Return with 1 decimal place, clamped between 0 and 100
+  return Math.min(Math.max(parseFloat(progress.toFixed(1)), 0), 100);
 };
 
 /**
  * Calculate days remaining until end date
- * This will use the provided current date for calculations
- * FIXED: Now includes both start and end dates in the range
+ * FIXED: Now includes the end date in the calculation
  */
 export const calculateDaysRemaining = (endDate: string, currentDate: Date = new Date()): number => {
   const end = new Date(endDate);
-  // Set to end of day to include the full end date
   end.setHours(23, 59, 59, 999);
-  const now = currentDate.getTime();
+  
+  const now = new Date(currentDate);
+  now.setHours(0, 0, 0, 0);
   
   // Calculate days remaining including the end date itself
-  const daysRemaining = Math.ceil((end.getTime() - now) / (1000 * 60 * 60 * 24));
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const daysRemaining = Math.ceil((end.getTime() - now.getTime()) / msPerDay);
   
-  // Return 0 if the end date has passed
+  // Return at least 1 if we're on the end date, 0 if we're past it
   return Math.max(daysRemaining, 0);
 };
 
 /**
- * Calculate total days between start and end date
- * FIXED: Now includes both start and end dates in the range
+ * Calculate total days between start and end date (inclusive)
+ * FIXED: Now correctly includes both the start and end dates
  */
 export const calculateTotalDays = (startDate: string, endDate: string): number => {
   const start = new Date(startDate);
-  const end = new Date(endDate);
+  start.setHours(0, 0, 0, 0);
   
-  // Add 1 to include both start and end dates in the count
-  return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const end = new Date(endDate);
+  end.setHours(23, 59, 59, 999);
+  
+  // Calculate total days including both start and end dates
+  const msPerDay = 1000 * 60 * 60 * 24;
+  return Math.ceil((end.getTime() - start.getTime()) / msPerDay) + 1;
 };
 
 /**

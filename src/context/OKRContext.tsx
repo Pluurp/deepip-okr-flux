@@ -70,10 +70,10 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     return new Date();
   };
 
-  // Update manual current date
+  // Update manual current date and force refresh
   const updateManualCurrentDate = (date: string | null) => {
     setManualCurrentDate(date);
-    // After updating the date, refresh all stats to reflect the change
+    // Force an immediate refresh after setting the date
     setTimeout(() => refreshStats(), 0);
   };
 
@@ -143,6 +143,9 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     localStorage.setItem('okr_global_start_date', globalStartDate);
     localStorage.setItem('okr_global_end_date', globalEndDate);
+    
+    // Force a refresh of stats whenever global dates change
+    refreshStats();
   }, [globalStartDate, globalEndDate]);
   
   // Save cycle to localStorage
@@ -157,20 +160,19 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     } else {
       localStorage.removeItem('okr_manual_current_date');
     }
+    
+    // Trigger a refresh when manual date changes
+    refreshStats();
   }, [manualCurrentDate]);
   
-  // Recalculate stats initially and when dependencies change
+  // Set up daily refresh
   useEffect(() => {
-    // Recalculate all department stats
-    refreshStats();
-    
-    // Set up daily refresh
     const refreshInterval = setInterval(() => {
       refreshStats();
     }, 1000 * 60 * 60 * 24); // Once every 24 hours
     
     return () => clearInterval(refreshInterval);
-  }, [globalStartDate, globalEndDate, manualCurrentDate]);
+  }, []);
 
   const updateObjectives = (departmentId: DepartmentId, updatedObjectives: Objective[]) => {
     setObjectives(prev => ({
@@ -178,8 +180,8 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
       [departmentId]: updatedObjectives
     }));
 
-    // Recalculate department stats when objectives change
-    setTimeout(() => recalculateDepartmentStats(departmentId), 0);
+    // Recalculate department stats immediately
+    recalculateDepartmentStats(departmentId);
   };
 
   const getObjectivesForDepartment = (departmentId: DepartmentId): Objective[] => {
@@ -201,8 +203,7 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     
     setObjectives(updatedObjectives);
     
-    // Recalculate stats for all departments (with slight delay to ensure state updates first)
-    setTimeout(() => refreshStats(), 0);
+    // Recalculate stats for all departments (will be triggered by the above useEffect)
   };
   
   const updateCycle = (newCycle: string) => {
@@ -243,7 +244,7 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     // Get the current date (manual or system)
     const currentDate = getCurrentDate();
 
-    // Calculate time progress using the current date
+    // Calculate time progress using the current date and fixed function
     const timeProgress = calculateTimeProgress(startDate, endDate, currentDate);
     
     // Calculate days remaining using fixed function
@@ -252,6 +253,7 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     // Calculate total days including both start and end dates
     const totalDays = calculateTotalDays(startDate, endDate);
 
+    // Update state directly with the latest calculated values
     setDepartmentStats(prev => ({
       ...prev,
       [departmentId]: {
