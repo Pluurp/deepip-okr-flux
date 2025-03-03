@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Objective, KeyResult, User, Status } from "@/types";
 import ProgressBar from "./ProgressBar";
@@ -10,7 +9,9 @@ import { Button } from "./ui/button";
 import { PlusCircle, Trash2, Calendar } from "lucide-react";
 import { calculateProgress, createNewKeyResult, getStatusFromProgress } from "@/utils/okrUtils";
 import { toast } from "sonner";
-import StatusIcon from "./StatusIcon";
+import { format } from "date-fns";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { Calendar as CalendarComponent } from "./ui/calendar";
 
 type ObjectiveListProps = {
   objectives: Objective[];
@@ -21,6 +22,7 @@ type ObjectiveListProps = {
 
 const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveListProps) => {
   const [selectedObjective, setSelectedObjective] = useState<string | null>(null);
+  const [dateType, setDateType] = useState<"start" | "end">("start");
 
   const getOwnerName = (ownerId: string) => {
     const owner = users.find(user => user.id === ownerId);
@@ -329,20 +331,17 @@ const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveList
                       />
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex items-center gap-1">
-                        <StatusIcon status={kr.status} size={14} />
-                        <EditableSelect
-                          value={kr.status}
-                          options={[
-                            { value: "Off Track", label: "Off Track" },
-                            { value: "At Risk", label: "At Risk" },
-                            { value: "On track", label: "On track" },
-                            { value: "Completed", label: "Completed" },
-                          ]}
-                          onChange={(value) => handleKeyResultStatusChange(kr, value)}
-                          valueClassName={cn("px-2 py-1 rounded-full text-xs font-medium", getStatusColor(kr.status))}
-                        />
-                      </div>
+                      <EditableSelect
+                        value={kr.status}
+                        options={[
+                          { value: "Off Track", label: "Off Track" },
+                          { value: "At Risk", label: "At Risk" },
+                          { value: "On track", label: "On track" },
+                          { value: "Completed", label: "Completed" },
+                        ]}
+                        onChange={(value) => handleKeyResultStatusChange(kr, value)}
+                        valueClassName={cn("px-2 py-1 rounded-full text-xs font-medium", getStatusColor(kr.status))}
+                      />
                     </td>
                     <td className="px-4 py-3">
                       <Button
