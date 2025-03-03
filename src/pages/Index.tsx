@@ -1,15 +1,19 @@
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { departments } from "@/data/departments";
-import { getObjectivesByDepartment } from "@/data/okrData";
 import DepartmentCard from "@/components/DepartmentCard";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar } from "lucide-react";
+import { Calendar, Plus } from "lucide-react";
 import { format } from "date-fns";
 import { useOKR } from "@/context/OKRContext";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import ObjectiveList from "@/components/ObjectiveList";
+import { Objective } from "@/types";
+import { createNewObjective } from "@/utils/okrUtils";
+import { toast } from "sonner";
+import StatusIcon from "@/components/StatusIcon";
 
 const Index = () => {
   const { 
@@ -18,15 +22,35 @@ const Index = () => {
     departmentStats: contextStats,
     cycle,
     objectives: allDepartmentObjectives,
-    refreshStats
+    refreshStats,
+    updateObjectives,
+    users
   } = useOKR();
+  
+  // Add state for company objectives
+  const [companyObjectives, setCompanyObjectives] = useState<Objective[]>([]);
   
   // Force a refresh when the component mounts to ensure latest data
   useEffect(() => {
     document.title = "OKR Dashboard | DeepIP";
     // Ensure we have the latest stats on initial render
     refreshStats();
+    
+    // Initialize company objectives
+    const savedCompanyOKRs = localStorage.getItem('company_okrs');
+    if (savedCompanyOKRs) {
+      try {
+        setCompanyObjectives(JSON.parse(savedCompanyOKRs));
+      } catch (e) {
+        console.error('Failed to parse saved company objectives', e);
+      }
+    }
   }, [refreshStats]);
+  
+  // Save company objectives to localStorage when they change
+  useEffect(() => {
+    localStorage.setItem('company_okrs', JSON.stringify(companyObjectives));
+  }, [companyObjectives]);
 
   const formatDate = (dateString: string) => {
     try {
@@ -34,6 +58,25 @@ const Index = () => {
     } catch (e) {
       return "Invalid date";
     }
+  };
+  
+  // Handle company objective updates
+  const handleCompanyObjectivesUpdate = (updatedObjectives: Objective[]) => {
+    setCompanyObjectives(updatedObjectives);
+  };
+  
+  // Add new company objective
+  const handleAddCompanyObjective = () => {
+    const newObjective = createNewObjective('company', 'user1');
+    
+    // Override with global dates and cycle
+    newObjective.startDate = globalStartDate;
+    newObjective.endDate = globalEndDate;
+    newObjective.cycle = cycle;
+    
+    setCompanyObjectives([...companyObjectives, newObjective]);
+    
+    toast.success("New company objective added");
   };
   
   // Use useMemo to calculate derived stats to prevent recalculation on every render
@@ -108,6 +151,30 @@ const Index = () => {
     };
   }, [allDepartmentObjectives, contextStats]);
 
+  // Handler for department objectives
+  const handleAddDepartmentObjective = (departmentId: string) => {
+    // Find a default owner from the department
+    const departmentUser = users.find(user => user.departmentId === departmentId);
+    const defaultOwnerId = departmentUser ? departmentUser.id : users[0].id;
+    
+    // Create new objective with global dates and cycle
+    const newObjective = createNewObjective(departmentId, defaultOwnerId);
+    
+    // Override with global dates and cycle
+    newObjective.startDate = globalStartDate;
+    newObjective.endDate = globalEndDate;
+    newObjective.cycle = cycle;
+    
+    // Get current objectives for this department
+    const currentObjectives = allDepartmentObjectives[departmentId] || [];
+    const updatedObjectives = [...currentObjectives, newObjective];
+    
+    // Update objectives in context
+    updateObjectives(departmentId, updatedObjectives);
+    
+    toast.success(`New objective added to ${departmentId}`);
+  };
+
   return (
     <DashboardLayout>
       <div className="animate-fade-in">
@@ -155,6 +222,44 @@ const Index = () => {
           </CardContent>
         </Card>
 
+        {/* Company OKRs Section */}
+        <Card className="mb-6 overflow-hidden border-0 shadow-sm">
+          <div className="h-1.5 bg-deepip-primary"></div>
+          <CardContent className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-deepip-primary">Company Objectives & Key Results</h2>
+              <Button 
+                size="sm" 
+                className="bg-deepip-primary text-white hover:bg-deepip-primary/90 flex items-center gap-1"
+                onClick={handleAddCompanyObjective}
+              >
+                <Plus size={16} />
+                Add Company Objective
+              </Button>
+            </div>
+            
+            {companyObjectives.length > 0 ? (
+              <ObjectiveList 
+                objectives={companyObjectives} 
+                users={users}
+                onUpdate={handleCompanyObjectivesUpdate}
+              />
+            ) : (
+              <div className="flex flex-col items-center justify-center py-8 border border-dashed rounded-md">
+                <p className="text-gray-500 mb-2">No company objectives defined</p>
+                <Button 
+                  variant="outline" 
+                  onClick={handleAddCompanyObjective}
+                  className="flex items-center gap-1"
+                >
+                  <Plus size={16} />
+                  Add Company Objective
+                </Button>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
           {departments.map((department) => {
             const deptObjectives = objectives[department.id] || [];
@@ -169,6 +274,7 @@ const Index = () => {
                 department={department}
                 stats={contextStats[department.id]}
                 objectives={objectivesSummary}
+                onAddObjective={() => handleAddDepartmentObjective(department.id)}
               />
             );
           })}
@@ -233,17 +339,32 @@ const Index = () => {
                     <p className="text-sm text-gray-500">Total Objectives</p>
                     <p className="text-2xl font-medium">{totalObjectives}</p>
                   </Card>
-                  <Card className="p-4 border shadow-sm">
-                    <p className="text-sm text-gray-500">On Track</p>
-                    <p className="text-2xl font-medium text-green-600">{statusCounts.onTrack}%</p>
+                  <Card className="p-4 border shadow-sm flex items-center">
+                    <div className="mr-2">
+                      <StatusIcon status="On track" size={20} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">On Track</p>
+                      <p className="text-2xl font-medium text-green-600">{statusCounts.onTrack}%</p>
+                    </div>
                   </Card>
-                  <Card className="p-4 border shadow-sm">
-                    <p className="text-sm text-gray-500">At Risk</p>
-                    <p className="text-2xl font-medium text-yellow-600">{statusCounts.atRisk}%</p>
+                  <Card className="p-4 border shadow-sm flex items-center">
+                    <div className="mr-2">
+                      <StatusIcon status="At Risk" size={20} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">At Risk</p>
+                      <p className="text-2xl font-medium text-yellow-600">{statusCounts.atRisk}%</p>
+                    </div>
                   </Card>
-                  <Card className="p-4 border shadow-sm">
-                    <p className="text-sm text-gray-500">Off Track</p>
-                    <p className="text-2xl font-medium text-red-600">{statusCounts.offTrack}%</p>
+                  <Card className="p-4 border shadow-sm flex items-center">
+                    <div className="mr-2">
+                      <StatusIcon status="Off Track" size={20} />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Off Track</p>
+                      <p className="text-2xl font-medium text-red-600">{statusCounts.offTrack}%</p>
+                    </div>
                   </Card>
                 </div>
               </div>

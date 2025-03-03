@@ -66,7 +66,6 @@ const Department = () => {
     setObjectives(updatedObjectives);
     // Update our persistent context
     updateObjectives(id as DepartmentId, updatedObjectives);
-    console.log("Objectives updated:", updatedObjectives);
   }, [id, updateObjectives]);
 
   const handleAddObjective = useCallback(() => {
@@ -171,11 +170,24 @@ const Department = () => {
         </Card>
 
         <div className="mt-8 animate-slide-in">
-          <ObjectiveList 
-            objectives={objectives} 
-            users={users} 
-            onUpdate={handleObjectivesUpdate}
-          />
+          {objectives.length > 0 ? (
+            <ObjectiveList 
+              objectives={objectives} 
+              users={users} 
+              onUpdate={handleObjectivesUpdate}
+            />
+          ) : (
+            <div className="flex flex-col items-center justify-center py-16 border border-dashed rounded-md">
+              <p className="text-gray-500 mb-4">No objectives defined for this department</p>
+              <Button 
+                className="flex items-center gap-1"
+                onClick={handleAddObjective}
+              >
+                <PlusCircle size={16} />
+                Add First Objective
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </DashboardLayout>
