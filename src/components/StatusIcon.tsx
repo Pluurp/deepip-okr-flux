@@ -8,7 +8,7 @@ type StatusIconProps = {
   className?: string;
 };
 
-const StatusIcon = ({ status, size = 16, className }: StatusIconProps) => {
+const StatusIcon = ({ status, size = 16, className = "" }: StatusIconProps) => {
   switch (status) {
     case "Completed":
       return <Trophy size={size} className={`text-blue-600 ${className}`} />;

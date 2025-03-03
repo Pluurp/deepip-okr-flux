@@ -24,7 +24,7 @@ const Index = () => {
     objectives: allDepartmentObjectives,
     refreshStats,
     updateObjectives,
-    users
+    users // Using users from context
   } = useOKR();
   
   // Add state for company objectives
@@ -67,12 +67,14 @@ const Index = () => {
   
   // Add new company objective
   const handleAddCompanyObjective = () => {
-    const newObjective = createNewObjective('company', 'user1');
+    // Create a new objective with a special departmentId for company level
+    const newObjective = createNewObjective('leadership' as DepartmentId, users[0].id);
     
     // Override with global dates and cycle
     newObjective.startDate = globalStartDate;
     newObjective.endDate = globalEndDate;
     newObjective.cycle = cycle;
+    newObjective.departmentId = 'leadership' as DepartmentId; // Mark as company-level
     
     setCompanyObjectives([...companyObjectives, newObjective]);
     
@@ -152,7 +154,7 @@ const Index = () => {
   }, [allDepartmentObjectives, contextStats]);
 
   // Handler for department objectives
-  const handleAddDepartmentObjective = (departmentId: string) => {
+  const handleAddDepartmentObjective = (departmentId: DepartmentId) => {
     // Find a default owner from the department
     const departmentUser = users.find(user => user.departmentId === departmentId);
     const defaultOwnerId = departmentUser ? departmentUser.id : users[0].id;
