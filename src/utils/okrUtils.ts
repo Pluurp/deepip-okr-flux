@@ -39,6 +39,7 @@ export const getStatusFromProgress = (progress: number): Status => {
 
 /**
  * Calculate time progress based on start and end dates
+ * This automatically uses today's date for calculations
  */
 export const calculateTimeProgress = (startDate: string, endDate: string): number => {
   const start = new Date(startDate).getTime();
@@ -59,6 +60,7 @@ export const calculateTimeProgress = (startDate: string, endDate: string): numbe
 
 /**
  * Calculate days remaining until end date
+ * This automatically uses today's date for calculations
  */
 export const calculateDaysRemaining = (endDate: string): number => {
   const end = new Date(endDate).getTime();
@@ -68,6 +70,50 @@ export const calculateDaysRemaining = (endDate: string): number => {
   
   // Return 0 if the end date has passed
   return Math.max(daysRemaining, 0);
+};
+
+/**
+ * Calculate total days between start and end date
+ */
+export const calculateTotalDays = (startDate: string, endDate: string): number => {
+  const start = new Date(startDate).getTime();
+  const end = new Date(endDate).getTime();
+  
+  return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+};
+
+/**
+ * Format display value based on metric type
+ */
+export const formatMetricValue = (value: number, metric: string): string => {
+  switch (metric) {
+    case "Percentage":
+      return `${value}%`;
+    case "Numerical":
+      return `${value}`;
+    case "Yes/No":
+      return value >= 100 ? "Yes" : "No";
+    default:
+      return `${value}`;
+  }
+};
+
+/**
+ * Get metric display for a key result based on its progress
+ */
+export const getMetricDisplay = (keyResult: KeyResult): string => {
+  const { metric, progress, currentValue } = keyResult;
+  
+  switch (metric) {
+    case "Percentage":
+      return `${progress}%`;
+    case "Numerical":
+      return `${currentValue}`;
+    case "Yes/No":
+      return progress >= 100 ? "Yes" : "No";
+    default:
+      return `${progress}%`;
+  }
 };
 
 /**

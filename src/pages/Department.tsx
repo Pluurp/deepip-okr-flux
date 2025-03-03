@@ -23,7 +23,9 @@ const Department = () => {
   const { 
     getObjectivesForDepartment, 
     updateObjectives, 
-    departmentStats 
+    departmentStats,
+    globalStartDate,
+    globalEndDate
   } = useOKR();
   
   const [objectives, setObjectives] = useState<Objective[]>([]);
@@ -69,7 +71,13 @@ const Department = () => {
     const departmentUser = users.find(user => user.departmentId === id as DepartmentId);
     const defaultOwnerId = departmentUser ? departmentUser.id : users[0].id;
     
+    // Create new objective with global dates
     const newObjective = createNewObjective(id as DepartmentId, defaultOwnerId);
+    
+    // Override with global dates
+    newObjective.startDate = globalStartDate;
+    newObjective.endDate = globalEndDate;
+    
     const updatedObjectives = [...objectives, newObjective];
     
     setObjectives(updatedObjectives);
@@ -86,14 +94,9 @@ const Department = () => {
       return "Invalid date";
     }
   };
-
-  const startDate = objectives[0]?.startDate 
-    ? formatDate(objectives[0].startDate)
-    : "January 1, 2025";
     
-  const endDate = objectives[0]?.endDate 
-    ? formatDate(objectives[0].endDate)
-    : "March 31, 2025";
+  const startDate = formatDate(globalStartDate);
+  const endDate = formatDate(globalEndDate);
 
   return (
     <DashboardLayout>
