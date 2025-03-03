@@ -1,4 +1,3 @@
-
 import { KeyResult, Objective, DepartmentId, Status } from "@/types";
 
 /**
@@ -40,17 +39,20 @@ export const getStatusFromProgress = (progress: number): Status => {
 /**
  * Calculate time progress based on start and end dates
  * This will use the provided current date for calculations
+ * FIXED: Now includes both start and end dates in the range
  */
 export const calculateTimeProgress = (startDate: string, endDate: string, currentDate: Date = new Date()): number => {
   const start = new Date(startDate).getTime();
   const end = new Date(endDate).getTime();
   const now = currentDate.getTime();
   
-  // If the date range is invalid, return 0
-  if (end <= start) return 0;
+  // Include both start and end date in the range (add 1 day to end)
+  const endPlusOneDay = end + (24 * 60 * 60 * 1000);
+  
+  // Calculate total days (including both start and end dates)
+  const totalDays = (endPlusOneDay - start) / (1000 * 60 * 60 * 24);
   
   // Calculate days passed since start date
-  const totalDays = (end - start) / (1000 * 60 * 60 * 24);
   const daysPassed = (now - start) / (1000 * 60 * 60 * 24);
   
   // Calculate percentage of time passed
@@ -63,12 +65,16 @@ export const calculateTimeProgress = (startDate: string, endDate: string, curren
 /**
  * Calculate days remaining until end date
  * This will use the provided current date for calculations
+ * FIXED: Now includes both start and end dates in the range
  */
 export const calculateDaysRemaining = (endDate: string, currentDate: Date = new Date()): number => {
-  const end = new Date(endDate).getTime();
+  const end = new Date(endDate);
+  // Set to end of day to include the full end date
+  end.setHours(23, 59, 59, 999);
   const now = currentDate.getTime();
   
-  const daysRemaining = Math.ceil((end - now) / (1000 * 60 * 60 * 24));
+  // Calculate days remaining including the end date itself
+  const daysRemaining = Math.ceil((end.getTime() - now) / (1000 * 60 * 60 * 24));
   
   // Return 0 if the end date has passed
   return Math.max(daysRemaining, 0);
@@ -76,12 +82,14 @@ export const calculateDaysRemaining = (endDate: string, currentDate: Date = new 
 
 /**
  * Calculate total days between start and end date
+ * FIXED: Now includes both start and end dates in the range
  */
 export const calculateTotalDays = (startDate: string, endDate: string): number => {
-  const start = new Date(startDate).getTime();
-  const end = new Date(endDate).getTime();
+  const start = new Date(startDate);
+  const end = new Date(endDate);
   
-  return Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+  // Add 1 to include both start and end dates in the count
+  return Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
 };
 
 /**

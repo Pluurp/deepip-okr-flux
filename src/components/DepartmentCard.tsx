@@ -39,7 +39,7 @@ const DepartmentCard = ({
             </div>
             <div className="text-right">
               <p className="text-gray-500 text-right">&nbsp;</p>
-              {/* Removed percentage calculation here */}
+              {/* Percentage removed as requested */}
               <p className="font-medium">&nbsp;</p>
             </div>
             <div>

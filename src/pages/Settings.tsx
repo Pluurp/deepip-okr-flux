@@ -11,6 +11,7 @@ import { useOKR } from "@/context/OKRContext";
 import { toast } from "sonner";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { calculateTotalDays, calculateDaysRemaining, calculateTimeProgress } from "@/utils/okrUtils";
 
 const Settings = () => {
   const { 
@@ -21,7 +22,8 @@ const Settings = () => {
     updateCycle,
     manualCurrentDate,
     updateManualCurrentDate,
-    getCurrentDate
+    getCurrentDate,
+    refreshStats
   } = useOKR();
   
   const [startDate, setStartDate] = useState<Date | undefined>(new Date(globalStartDate));
@@ -31,6 +33,29 @@ const Settings = () => {
     manualCurrentDate ? new Date(manualCurrentDate) : undefined
   );
   const [hasChanges, setHasChanges] = useState(false);
+  
+  // Live preview of calculations
+  const [previewStats, setPreviewStats] = useState({
+    totalDays: 0,
+    daysRemaining: 0,
+    timeProgress: 0
+  });
+  
+  // Update preview whenever dates change
+  useEffect(() => {
+    if (startDate && endDate) {
+      const currentDate = overrideDate || new Date();
+      const totalDays = calculateTotalDays(startDate.toISOString(), endDate.toISOString());
+      const daysRemaining = calculateDaysRemaining(endDate.toISOString(), currentDate);
+      const timeProgress = calculateTimeProgress(startDate.toISOString(), endDate.toISOString(), currentDate);
+      
+      setPreviewStats({
+        totalDays,
+        daysRemaining,
+        timeProgress
+      });
+    }
+  }, [startDate, endDate, overrideDate]);
   
   useEffect(() => {
     document.title = "Settings | DeepIP OKRs";
@@ -91,6 +116,9 @@ const Settings = () => {
     
     // Update manual current date if set
     updateManualCurrentDate(overrideDate ? overrideDate.toISOString() : null);
+    
+    // Force an immediate stats refresh to ensure synchronization
+    setTimeout(() => refreshStats(), 50);
     
     toast.success("Settings updated successfully");
     setHasChanges(false);
@@ -201,6 +229,26 @@ const Settings = () => {
                 </Popover>
               </div>
             </div>
+            
+            {hasChanges && startDate && endDate && (
+              <Card className="p-4 mt-4 border border-yellow-200 bg-yellow-50">
+                <p className="text-sm font-medium text-yellow-800">Preview of changes (not yet saved):</p>
+                <div className="grid grid-cols-3 gap-4 mt-2">
+                  <div>
+                    <p className="text-xs text-gray-500">Total Days</p>
+                    <p className="font-medium">{previewStats.totalDays}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Days Remaining</p>
+                    <p className="font-medium">{previewStats.daysRemaining}/{previewStats.totalDays}</p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Time Progress</p>
+                    <p className="font-medium">{previewStats.timeProgress.toFixed(1)}%</p>
+                  </div>
+                </div>
+              </Card>
+            )}
             
             <Separator className="my-6" />
             
