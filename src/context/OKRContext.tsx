@@ -1,10 +1,9 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
-import { Objective, DepartmentId, User } from '@/types';
+import { Objective, DepartmentId } from '@/types';
 import { getObjectivesByDepartment, departmentStats as initialDepartmentStats } from '@/data/okrData';
 import { calculateObjectiveProgress, calculateTimeProgress, calculateDaysRemaining, calculateTotalDays } from '@/utils/okrUtils';
-import { users as initialUsers } from '@/data/okrData';
 
-// Extend OKRContextType to include users
 type OKRContextType = {
   objectives: Record<DepartmentId, Objective[]>;
   departmentStats: typeof initialDepartmentStats;
@@ -20,7 +19,6 @@ type OKRContextType = {
   manualCurrentDate: string | null;
   updateManualCurrentDate: (date: string | null) => void;
   getCurrentDate: () => Date;
-  users: User[]; // Add users to the context
 };
 
 const OKRContext = createContext<OKRContextType | undefined>(undefined);
@@ -44,8 +42,7 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     growth: getObjectivesByDepartment('growth'),
   });
 
-  // Add users state
-  const [users, setUsers] = useState<User[]>(initialUsers);
+  const [departmentStats, setDepartmentStats] = useState({ ...stableInitialDepartmentStats });
   
   // Set up global cycle (for all departments)
   const [cycle, setCycle] = useState<string>("Q1");
@@ -351,8 +348,7 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     updateCycle,
     manualCurrentDate,
     updateManualCurrentDate,
-    getCurrentDate,
-    users // Include users in the context value
+    getCurrentDate
   }), [
     objectives,
     departmentStats,
@@ -367,8 +363,7 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     updateCycle,
     manualCurrentDate,
     updateManualCurrentDate,
-    getCurrentDate,
-    users // Add to dependency array
+    getCurrentDate
   ]);
 
   return (
