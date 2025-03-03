@@ -64,7 +64,8 @@ const DepartmentCard = ({
               value={stats.overallProgress} 
               variant="primary"
               className="mb-6"
-              animate={false} // Disable animation to prevent transitioning from old to new values
+              animate={false}
+              key={`overall-${stats.overallProgress}`}
             />
           </div>
           

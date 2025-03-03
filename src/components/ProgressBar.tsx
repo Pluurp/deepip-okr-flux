@@ -1,5 +1,6 @@
 
 import { cn } from "@/lib/utils";
+import { useRef, useEffect } from "react";
 
 type ProgressBarProps = {
   value: number;
@@ -18,6 +19,16 @@ const ProgressBar = ({
   showLabel = false,
   animate = true,
 }: ProgressBarProps) => {
+  const barRef = useRef<HTMLDivElement>(null);
+  
+  // Use useEffect to update the width directly, bypassing React's transition animations
+  useEffect(() => {
+    if (barRef.current) {
+      // Apply width directly to the DOM to avoid animation flicker
+      barRef.current.style.width = `${value}%`;
+    }
+  }, [value]);
+
   // Calculate color based on value
   const getColorClass = () => {
     if (variant === "primary") return "bg-deepip-primary";
@@ -53,10 +64,11 @@ const ProgressBar = ({
       </div>
       <div className={cn("w-full bg-gray-100 rounded-full overflow-hidden", getHeightClass())}>
         <div
+          ref={barRef}
           className={cn(
             getColorClass(),
             getHeightClass(),
-            animate && "transition-all duration-1000 ease-out",
+            animate ? "transition-none" : "transition-none",
             "rounded-full"
           )}
           style={{ width: `${value}%` }}

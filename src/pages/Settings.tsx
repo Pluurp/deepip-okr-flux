@@ -114,9 +114,8 @@ const Settings = () => {
     }
     
     // First update manual date to ensure it's available for calculations
-    if (overrideDate !== undefined) {
-      updateManualCurrentDate(overrideDate ? overrideDate.toISOString() : null);
-    }
+    const manualDateValue = overrideDate ? overrideDate.toISOString() : null;
+    updateManualCurrentDate(manualDateValue);
     
     // Then update global dates and cycle
     updateGlobalDates(startDate.toISOString(), endDate.toISOString());
@@ -128,7 +127,16 @@ const Settings = () => {
     // Show success toast
     toast.success("Settings updated successfully");
     setHasChanges(false);
-  }, [startDate, endDate, overrideDate, selectedCycle, updateManualCurrentDate, updateGlobalDates, updateCycle, refreshStats]);
+  }, [
+    startDate, 
+    endDate, 
+    overrideDate, 
+    selectedCycle, 
+    updateManualCurrentDate, 
+    updateGlobalDates, 
+    updateCycle, 
+    refreshStats
+  ]);
   
   // Apply changes immediately
   const applyChangesImmediately = useCallback(() => {
@@ -247,7 +255,12 @@ const Settings = () => {
               <Card className="p-4 mt-4 border border-yellow-200 bg-yellow-50">
                 <div className="flex justify-between items-center mb-2">
                   <p className="text-sm font-medium text-yellow-800">Preview of changes (not yet saved):</p>
-                  <Button size="sm" variant="outline" className="text-xs" onClick={applyChangesImmediately}>
+                  <Button 
+                    size="sm" 
+                    variant="outline" 
+                    className="text-xs" 
+                    onClick={applyChangesImmediately}
+                  >
                     Apply Now
                   </Button>
                 </div>

@@ -1,5 +1,5 @@
 
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { Objective, DepartmentId } from '@/types';
 import { getObjectivesByDepartment, departmentStats as initialDepartmentStats } from '@/data/okrData';
 import { calculateObjectiveProgress, calculateTimeProgress, calculateDaysRemaining, calculateTotalDays } from '@/utils/okrUtils';
@@ -23,6 +23,15 @@ type OKRContextType = {
 
 const OKRContext = createContext<OKRContextType | undefined>(undefined);
 
+// Create a stable version of initial department stats
+const stableInitialDepartmentStats = {
+  leadership: { daysRemaining: 0, totalDays: 0, timeProgress: 0, overallProgress: 0 },
+  product: { daysRemaining: 0, totalDays: 0, timeProgress: 0, overallProgress: 0 },
+  ai: { daysRemaining: 0, totalDays: 0, timeProgress: 0, overallProgress: 0 },
+  sales: { daysRemaining: 0, totalDays: 0, timeProgress: 0, overallProgress: 0 },
+  growth: { daysRemaining: 0, totalDays: 0, timeProgress: 0, overallProgress: 0 },
+};
+
 export const OKRProvider = ({ children }: { children: ReactNode }) => {
   // Initialize with data from okrData.ts
   const [objectives, setObjectives] = useState<Record<DepartmentId, Objective[]>>({
@@ -33,7 +42,7 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     growth: getObjectivesByDepartment('growth'),
   });
 
-  const [departmentStats, setDepartmentStats] = useState(initialDepartmentStats);
+  const [departmentStats, setDepartmentStats] = useState({ ...stableInitialDepartmentStats });
   
   // Set up global cycle (for all departments)
   const [cycle, setCycle] = useState<string>("Q1");
@@ -70,6 +79,14 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     return new Date();
   }, [manualCurrentDate]);
 
+  // Force update counter to trigger rerenders when needed
+  const [forceUpdateCounter, setForceUpdateCounter] = useState(0);
+  
+  // Force a rerender
+  const forceUpdate = useCallback(() => {
+    setForceUpdateCounter(prev => prev + 1);
+  }, []);
+
   // Memoize recalculateDepartmentStats for performance and consistency
   const recalculateDepartmentStats = useCallback((departmentId: DepartmentId) => {
     const departmentObjectives = objectives[departmentId] || [];
@@ -98,34 +115,52 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     // Calculate total days including both start and end dates
     const totalDays = calculateTotalDays(startDate, endDate);
 
-    // Update state directly with the latest calculated values
-    setDepartmentStats(prev => ({
-      ...prev,
-      [departmentId]: {
-        daysRemaining,
-        totalDays,
-        timeProgress: parseFloat(timeProgress.toFixed(1)),
-        overallProgress
+    // Use functional update to ensure we're working with latest state
+    setDepartmentStats(prev => {
+      // Only update if values have changed to avoid unnecessary renders
+      if (
+        prev[departmentId].daysRemaining === daysRemaining &&
+        prev[departmentId].totalDays === totalDays &&
+        prev[departmentId].timeProgress === parseFloat(timeProgress.toFixed(1)) &&
+        prev[departmentId].overallProgress === overallProgress
+      ) {
+        return prev;
       }
-    }));
+      
+      // Return new state object
+      return {
+        ...prev,
+        [departmentId]: {
+          daysRemaining,
+          totalDays,
+          timeProgress: parseFloat(timeProgress.toFixed(1)),
+          overallProgress
+        }
+      };
+    });
   }, [objectives, globalStartDate, globalEndDate, getCurrentDate]);
 
   // Create a memoized refreshStats function
   const refreshStats = useCallback(() => {
     const departmentIds: DepartmentId[] = ['leadership', 'product', 'ai', 'sales', 'growth'];
+    
+    // Update each department's stats synchronously
     departmentIds.forEach(id => recalculateDepartmentStats(id));
-  }, [recalculateDepartmentStats]);
+    
+    // Force a UI update to ensure changes are displayed
+    forceUpdate();
+  }, [recalculateDepartmentStats, forceUpdate]);
 
   // Update manual current date and force refresh
   const updateManualCurrentDate = useCallback((date: string | null) => {
     setManualCurrentDate(date);
-    // Using setTimeout with 0 delay pushes the refresh to the next event loop tick
-    // ensuring the state update happens first
-    setTimeout(() => refreshStats(), 0);
-  }, [refreshStats]);
+    // Force an immediate refresh
+    setForceUpdateCounter(prev => prev + 1);
+  }, []);
 
-  // Memoize the updateGlobalDates function to prevent recreating it unnecessarily
+  // Memoize the updateGlobalDates function
   const updateGlobalDates = useCallback((startDate: string, endDate: string) => {
+    // Update global dates
     setGlobalStartDate(startDate);
     setGlobalEndDate(endDate);
     
@@ -141,9 +176,9 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
       return updatedObjectives;
     });
     
-    // Force an immediate refresh after state updates
-    setTimeout(() => refreshStats(), 0);
-  }, [refreshStats]);
+    // Force an immediate refresh
+    setForceUpdateCounter(prev => prev + 1);
+  }, []);
 
   // Memoize updateCycle to prevent recreating it unnecessarily
   const updateCycle = useCallback((newCycle: string) => {
@@ -161,24 +196,28 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
       return updatedObjectives;
     });
     
-    // Force a refresh after updating cycle
-    setTimeout(() => refreshStats(), 0);
-  }, [refreshStats]);
+    // Force an immediate refresh
+    setForceUpdateCounter(prev => prev + 1);
+  }, []);
   
-  // Memoize getObjectivesForDepartment
+  // Memoize getObjectivesForDepartment to prevent unnecessary rerenders
   const getObjectivesForDepartment = useCallback((departmentId: DepartmentId): Objective[] => {
     return objectives[departmentId] || [];
   }, [objectives]);
   
-  // Memoize updateObjectives
+  // Memoize updateObjectives to prevent unnecessary recreation
   const updateObjectives = useCallback((departmentId: DepartmentId, updatedObjectives: Objective[]) => {
-    setObjectives(prev => ({
-      ...prev,
-      [departmentId]: updatedObjectives
-    }));
+    setObjectives(prev => {
+      const newObjectives = {
+        ...prev,
+        [departmentId]: updatedObjectives
+      };
+      return newObjectives;
+    });
 
-    // Recalculate department stats immediately after state update
-    setTimeout(() => recalculateDepartmentStats(departmentId), 0);
+    // Force an immediate refresh of department stats
+    recalculateDepartmentStats(departmentId);
+    setForceUpdateCounter(prev => prev + 1);
   }, [recalculateDepartmentStats]);
 
   // Load from localStorage on mount
@@ -232,8 +271,13 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
       setManualCurrentDate(savedManualCurrentDate);
     }
     
-    // Force an initial stats refresh after loading from localStorage
-    setTimeout(() => refreshStats(), 0);
+    // Force an initial stats refresh after loading
+    setForceUpdateCounter(prev => prev + 1);
+  }, []);
+  
+  // Make sure initial refresh happens in the component lifecycle
+  useEffect(() => {
+    refreshStats();
   }, [refreshStats]);
 
   // Save to localStorage whenever objectives change
@@ -272,6 +316,14 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     refreshStats();
   }, [manualCurrentDate, refreshStats]);
   
+  // Update department stats when force update counter changes
+  useEffect(() => {
+    if (forceUpdateCounter > 0) {
+      const departmentIds: DepartmentId[] = ['leadership', 'product', 'ai', 'sales', 'growth'];
+      departmentIds.forEach(id => recalculateDepartmentStats(id));
+    }
+  }, [forceUpdateCounter, recalculateDepartmentStats]);
+  
   // Set up daily refresh
   useEffect(() => {
     const refreshInterval = setInterval(() => {
@@ -281,25 +333,41 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
     return () => clearInterval(refreshInterval);
   }, [refreshStats]);
 
+  // Memoize the context value to prevent unnecessary re-renders
+  const contextValue = useMemo(() => ({
+    objectives,
+    departmentStats,
+    updateObjectives,
+    getObjectivesForDepartment,
+    recalculateDepartmentStats,
+    globalStartDate,
+    globalEndDate,
+    updateGlobalDates,
+    refreshStats,
+    cycle,
+    updateCycle,
+    manualCurrentDate,
+    updateManualCurrentDate,
+    getCurrentDate
+  }), [
+    objectives,
+    departmentStats,
+    updateObjectives,
+    getObjectivesForDepartment,
+    recalculateDepartmentStats,
+    globalStartDate,
+    globalEndDate,
+    updateGlobalDates,
+    refreshStats,
+    cycle,
+    updateCycle,
+    manualCurrentDate,
+    updateManualCurrentDate,
+    getCurrentDate
+  ]);
+
   return (
-    <OKRContext.Provider 
-      value={{ 
-        objectives,
-        departmentStats,
-        updateObjectives,
-        getObjectivesForDepartment,
-        recalculateDepartmentStats,
-        globalStartDate,
-        globalEndDate,
-        updateGlobalDates,
-        refreshStats,
-        cycle,
-        updateCycle,
-        manualCurrentDate,
-        updateManualCurrentDate,
-        getCurrentDate
-      }}
-    >
+    <OKRContext.Provider value={contextValue}>
       {children}
     </OKRContext.Provider>
   );

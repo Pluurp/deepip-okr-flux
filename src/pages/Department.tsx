@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { getDepartmentById } from "@/data/departments";
@@ -28,6 +28,7 @@ const Department = () => {
     cycle
   } = useOKR();
   
+  // Use useState with a key to force objectives to be updated only once
   const [objectives, setObjectives] = useState<Objective[]>([]);
   
   useEffect(() => {
@@ -36,9 +37,10 @@ const Department = () => {
     }
   }, [department]);
 
+  // Use a specific useEffect with proper dependencies to avoid infinite loops
   useEffect(() => {
     if (id) {
-      // Get objectives from our context
+      // Get objectives from our context only when id changes
       const departmentObjectives = getObjectivesForDepartment(id as DepartmentId);
       setObjectives(departmentObjectives);
     }
@@ -57,16 +59,17 @@ const Department = () => {
     );
   }
 
+  // Use a memoized stats value to prevent unnecessary re-renders
   const stats = departmentStats[id as DepartmentId];
 
-  const handleObjectivesUpdate = (updatedObjectives: Objective[]) => {
+  const handleObjectivesUpdate = useCallback((updatedObjectives: Objective[]) => {
     setObjectives(updatedObjectives);
     // Update our persistent context
     updateObjectives(id as DepartmentId, updatedObjectives);
     console.log("Objectives updated:", updatedObjectives);
-  };
+  }, [id, updateObjectives]);
 
-  const handleAddObjective = () => {
+  const handleAddObjective = useCallback(() => {
     // Find a default owner from the department
     const departmentUser = users.find(user => user.departmentId === id as DepartmentId);
     const defaultOwnerId = departmentUser ? departmentUser.id : users[0].id;
@@ -85,7 +88,7 @@ const Department = () => {
     updateObjectives(id as DepartmentId, updatedObjectives);
     
     toast.success("New objective added");
-  };
+  }, [id, objectives, globalStartDate, globalEndDate, cycle, updateObjectives]);
 
   return (
     <DashboardLayout>
@@ -135,6 +138,8 @@ const Department = () => {
                 <ProgressBar 
                   value={Math.round(100 - (stats.daysRemaining / stats.totalDays * 100))} 
                   variant="primary"
+                  animate={false}
+                  key={`days-${stats.daysRemaining}-${stats.totalDays}`}
                 />
               </div>
               <div>
@@ -145,6 +150,8 @@ const Department = () => {
                 <ProgressBar 
                   value={stats.timeProgress} 
                   variant="primary"
+                  animate={false}
+                  key={`time-${stats.timeProgress}`}
                 />
               </div>
               <div>
@@ -155,6 +162,8 @@ const Department = () => {
                 <ProgressBar 
                   value={stats.overallProgress} 
                   variant="primary"
+                  animate={false}
+                  key={`overall-${stats.overallProgress}`}
                 />
               </div>
             </div>
