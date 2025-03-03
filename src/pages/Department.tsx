@@ -1,5 +1,5 @@
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { getDepartmentById } from "@/data/departments";
@@ -8,28 +8,17 @@ import ObjectiveList from "@/components/ObjectiveList";
 import ProgressBar from "@/components/ProgressBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, Plus } from "lucide-react";
-import { Objective, DepartmentId, KeyResult } from "@/types";
-import { toast } from "sonner";
+import { ChevronLeft } from "lucide-react";
 
 const Department = () => {
   const { id } = useParams<{ id: string }>();
   const department = getDepartmentById(id || "");
-  const [objectives, setObjectives] = useState<Objective[]>([]);
   
   useEffect(() => {
     if (department) {
       document.title = `${department.name} | DeepIP OKRs`;
     }
   }, [department]);
-
-  useEffect(() => {
-    if (id) {
-      // Cast id to DepartmentId since we've validated it exists in departments
-      const departmentObjectives = getObjectivesByDepartment(id as DepartmentId);
-      setObjectives(departmentObjectives);
-    }
-  }, [id]);
 
   if (!department || !id) {
     return (
@@ -44,46 +33,8 @@ const Department = () => {
     );
   }
 
-  // We know id is valid at this point as we've checked department exists
-  const stats = departmentStats[id as DepartmentId];
-
-  const handleObjectivesUpdate = (updatedObjectives: Objective[]) => {
-    setObjectives(updatedObjectives);
-    // In a real app, this would save to the database
-    console.log("Objectives updated:", updatedObjectives);
-  };
-
-  const handleAddObjective = () => {
-    // Create a default key result for the new objective
-    const newKeyResult: KeyResult = {
-      id: `kr-new-${Date.now()}`,
-      title: "New Key Result",
-      objectiveId: `new-${Date.now()}`,
-      metric: "Percentage",
-      startValue: 0,
-      targetValue: 100,
-      currentValue: 0,
-      progress: 0,
-      ownerId: users[0].id, // Default to first user
-      status: "On track",
-      confidenceLevel: "Medium"
-    };
-
-    const newObjective: Objective = {
-      id: `new-${Date.now()}`,
-      title: "New Objective",
-      departmentId: id as DepartmentId,
-      progress: 0,
-      keyResults: [newKeyResult],
-      cycle: "Q1",
-      startDate: "2025-01-01",
-      endDate: "2025-03-31",
-      ownerId: users[0].id, // Default to first user
-    };
-
-    setObjectives((prev) => [...prev, newObjective]);
-    toast.success("New objective added");
-  };
+  const stats = departmentStats[id];
+  const objectives = getObjectivesByDepartment(id);
 
   return (
     <DashboardLayout>
@@ -97,21 +48,15 @@ const Department = () => {
           <div className="h-1.5" style={{ backgroundColor: department.color }}></div>
           <CardHeader className="pb-2">
             <CardTitle className="flex justify-between items-center">
-              <span className="text-2xl font-bold" style={{ color: department.color }}>
+              <h1 className="text-2xl font-bold" style={{ color: department.color }}>
                 {department.name}
-              </span>
-              <Button 
-                size="sm" 
-                className="bg-deepip-primary text-white hover:bg-deepip-primary/90" 
-                onClick={handleAddObjective}
-              >
-                <Plus size={16} />
+              </h1>
+              <Button size="sm" className="bg-deepip-primary text-white hover:bg-deepip-primary/90">
                 Add Objective
               </Button>
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            
             <div className="grid md:grid-cols-4 gap-6 mb-6">
               <div className="space-y-1">
                 <p className="text-sm text-gray-500">Cycle</p>
@@ -163,11 +108,7 @@ const Department = () => {
         </Card>
 
         <div className="mt-8 animate-slide-in">
-          <ObjectiveList 
-            objectives={objectives} 
-            users={users} 
-            onUpdate={handleObjectivesUpdate}
-          />
+          <ObjectiveList objectives={objectives} users={users} />
         </div>
       </div>
     </DashboardLayout>

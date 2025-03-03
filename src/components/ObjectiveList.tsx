@@ -1,30 +1,15 @@
 
-import { useState } from "react";
 import { Objective, KeyResult, User } from "@/types";
 import ProgressBar from "./ProgressBar";
 import { cn } from "@/lib/utils";
-import EditableText from "./EditableText";
-import EditableNumber from "./EditableNumber";
-import EditableSelect from "./EditableSelect";
-import { 
-  calculateKeyResultProgress, 
-  calculateObjectiveProgress,
-  statusOptions, 
-  confidenceLevelOptions,
-  metricOptions
-} from "@/utils/okrUtils";
-import { toast } from "sonner";
 
 type ObjectiveListProps = {
   objectives: Objective[];
   users: User[];
   className?: string;
-  onUpdate?: (updatedObjectives: Objective[]) => void;
 };
 
-const ObjectiveList = ({ objectives: initialObjectives, users, className, onUpdate }: ObjectiveListProps) => {
-  const [objectives, setObjectives] = useState<Objective[]>(initialObjectives);
-
+const ObjectiveList = ({ objectives, users, className }: ObjectiveListProps) => {
   const getOwnerName = (ownerId: string) => {
     const owner = users.find(user => user.id === ownerId);
     return owner ? owner.name : "Unassigned";
@@ -45,78 +30,13 @@ const ObjectiveList = ({ objectives: initialObjectives, users, className, onUpda
     }
   };
 
-  const updateObjectiveTitle = (objectiveId: string, newTitle: string) => {
-    const updatedObjectives = objectives.map(obj => {
-      if (obj.id === objectiveId) {
-        return { ...obj, title: newTitle };
-      }
-      return obj;
-    });
-    
-    setObjectives(updatedObjectives);
-    if (onUpdate) onUpdate(updatedObjectives);
-    toast.success("Objective title updated");
-  };
-
-  const updateKeyResult = (objectiveId: string, keyResultId: string, updates: Partial<KeyResult>) => {
-    const updatedObjectives = objectives.map(obj => {
-      if (obj.id === objectiveId) {
-        const updatedKeyResults = obj.keyResults.map(kr => {
-          if (kr.id === keyResultId) {
-            const updatedKr = { ...kr, ...updates };
-            
-            // Recalculate progress if any of the values have changed
-            if (
-              updates.startValue !== undefined || 
-              updates.currentValue !== undefined || 
-              updates.targetValue !== undefined
-            ) {
-              updatedKr.progress = calculateKeyResultProgress(
-                updatedKr.startValue,
-                updatedKr.currentValue,
-                updatedKr.targetValue
-              );
-            }
-            
-            return updatedKr;
-          }
-          return kr;
-        });
-        
-        // Recalculate objective progress based on updated key results
-        const updatedProgress = calculateObjectiveProgress(updatedKeyResults);
-        
-        return { 
-          ...obj, 
-          keyResults: updatedKeyResults,
-          progress: updatedProgress
-        };
-      }
-      return obj;
-    });
-    
-    setObjectives(updatedObjectives);
-    if (onUpdate) onUpdate(updatedObjectives);
-    toast.success("Key result updated");
-  };
-
-  const userOptions = users.map(user => ({
-    value: user.id,
-    label: user.name
-  }));
-
   return (
     <div className={cn("space-y-8", className)}>
       {objectives.map((objective) => (
         <div key={objective.id} className="border rounded-lg overflow-hidden bg-white">
           <div className="p-4 border-b bg-gray-50">
             <div className="flex justify-between items-center">
-              <h3 className="text-lg font-medium">
-                <EditableText 
-                  value={objective.title} 
-                  onChange={(newTitle) => updateObjectiveTitle(objective.id, newTitle)}
-                />
-              </h3>
+              <h3 className="text-lg font-medium">{objective.title}</h3>
               <div className="flex items-center gap-2">
                 <span className="text-sm text-gray-500">Progress:</span>
                 <span className="font-medium">{objective.progress}%</span>
@@ -142,50 +62,11 @@ const ObjectiveList = ({ objectives: initialObjectives, users, className, onUpda
               <tbody>
                 {objective.keyResults.map((kr) => (
                   <tr key={kr.id} className="border-b hover:bg-gray-50">
-                    <td className="px-4 py-3">
-                      <EditableText 
-                        value={kr.title} 
-                        onChange={(newTitle) => 
-                          updateKeyResult(objective.id, kr.id, { title: newTitle })
-                        }
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <EditableSelect
-                        value={kr.metric}
-                        options={metricOptions}
-                        onChange={(newMetric) => 
-                          updateKeyResult(objective.id, kr.id, { metric: newMetric as "Percentage" | "Numerical" | "Yes/No" })
-                        }
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <EditableNumber 
-                        value={kr.startValue}
-                        onChange={(newValue) => 
-                          updateKeyResult(objective.id, kr.id, { startValue: newValue })
-                        }
-                        suffix={kr.metric === 'Percentage' ? '%' : ''}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <EditableNumber 
-                        value={kr.targetValue}
-                        onChange={(newValue) => 
-                          updateKeyResult(objective.id, kr.id, { targetValue: newValue })
-                        }
-                        suffix={kr.metric === 'Percentage' ? '%' : ''}
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <EditableNumber 
-                        value={kr.currentValue}
-                        onChange={(newValue) => 
-                          updateKeyResult(objective.id, kr.id, { currentValue: newValue })
-                        }
-                        suffix={kr.metric === 'Percentage' ? '%' : ''}
-                      />
-                    </td>
+                    <td className="px-4 py-3">{kr.title}</td>
+                    <td className="px-4 py-3">{kr.metric}</td>
+                    <td className="px-4 py-3">{kr.startValue}{kr.metric === 'Percentage' ? '%' : ''}</td>
+                    <td className="px-4 py-3">{kr.targetValue}{kr.metric === 'Percentage' ? '%' : ''}</td>
+                    <td className="px-4 py-3">{kr.currentValue}{kr.metric === 'Percentage' ? '%' : ''}</td>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <ProgressBar 
@@ -196,24 +77,11 @@ const ObjectiveList = ({ objectives: initialObjectives, users, className, onUpda
                         <span>{kr.progress}%</span>
                       </div>
                     </td>
+                    <td className="px-4 py-3">{getOwnerName(kr.ownerId)}</td>
                     <td className="px-4 py-3">
-                      <EditableSelect
-                        value={kr.ownerId}
-                        options={userOptions}
-                        onChange={(newOwnerId) => 
-                          updateKeyResult(objective.id, kr.id, { ownerId: newOwnerId })
-                        }
-                      />
-                    </td>
-                    <td className="px-4 py-3">
-                      <EditableSelect
-                        value={kr.status}
-                        options={statusOptions}
-                        onChange={(newStatus) => 
-                          updateKeyResult(objective.id, kr.id, { status: newStatus as "Off Track" | "At Risk" | "On track" | "Completed" })
-                        }
-                        getStatusColor={getStatusColor}
-                      />
+                      <span className={cn("px-2 py-1 rounded-full text-xs font-medium", getStatusColor(kr.status))}>
+                        {kr.status}
+                      </span>
                     </td>
                   </tr>
                 ))}
