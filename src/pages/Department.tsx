@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
@@ -8,7 +9,7 @@ import ProgressBar from "@/components/ProgressBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft } from "lucide-react";
-import { Objective } from "@/types";
+import { Objective, DepartmentId } from "@/types";
 import { toast } from "sonner";
 
 const Department = () => {
@@ -24,7 +25,8 @@ const Department = () => {
 
   useEffect(() => {
     if (id) {
-      const departmentObjectives = getObjectivesByDepartment(id);
+      // Cast id to DepartmentId since we've validated it exists in departments
+      const departmentObjectives = getObjectivesByDepartment(id as DepartmentId);
       setObjectives(departmentObjectives);
     }
   }, [id]);
@@ -42,7 +44,8 @@ const Department = () => {
     );
   }
 
-  const stats = departmentStats[id];
+  // We know id is valid at this point as we've checked department exists
+  const stats = departmentStats[id as DepartmentId];
 
   const handleObjectivesUpdate = (updatedObjectives: Objective[]) => {
     setObjectives(updatedObjectives);
