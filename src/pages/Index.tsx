@@ -7,8 +7,32 @@ import { departments } from "@/data/departments";
 import { Link } from "react-router-dom";
 import { BarChart3, Calendar, Users, Target } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useOKR } from "@/context/OKRContext";
 
 const Index = () => {
+  const { objectives: allObjectives } = useOKR();
+
+  const companyObjectives = {
+    id: "company",
+    title: "Company Objectives",
+    keyResults: []
+  };
+
+  // Calculate department stats based on actual objectives
+  const getDepartmentStats = (departmentId: string) => ({
+    daysRemaining: 90,
+    totalDays: 90,
+    timeProgress: 0,
+    overallProgress: allObjectives[departmentId]?.reduce((acc, obj) => acc + obj.progress, 0) / (allObjectives[departmentId]?.length || 1) || 0
+  });
+
+  // Get objectives for a department
+  const getDepartmentObjectives = (departmentId: string) => 
+    allObjectives[departmentId]?.map(obj => ({
+      title: obj.title,
+      progress: obj.progress
+    })) || [];
+
   return (
     <DashboardLayout>
       <div className="space-y-8 p-6 animate-fade-in">
@@ -77,7 +101,10 @@ const Index = () => {
 
         <div className="grid gap-4 grid-cols-1 lg:grid-cols-3">
           <div className="lg:col-span-2">
-            <CompanyObjectiveList />
+            <CompanyObjectiveList 
+              objectives={[companyObjectives]}
+              className=""
+            />
           </div>
           <div className="space-y-4">
             <Card>
@@ -89,6 +116,8 @@ const Index = () => {
                   <DepartmentCard
                     key={department.id}
                     department={department}
+                    stats={getDepartmentStats(department.id)}
+                    objectives={getDepartmentObjectives(department.id)}
                   />
                 ))}
               </CardContent>
