@@ -9,7 +9,7 @@ const Logo = ({ className }: LogoProps) => {
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <img 
-        src="/logo.png" 
+        src="/lovable-uploads/00ac3caa-0c36-4e61-9c69-ad4ae95223ff.png" 
         alt="DeepIP Logo" 
         width="40" 
         height="40" 
