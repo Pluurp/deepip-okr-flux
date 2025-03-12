@@ -14,10 +14,12 @@ const EditableText = ({ value, onChange, className, placeholder = 'Click to edit
   const [text, setText] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
 
+  // Sync text with value prop when it changes
   useEffect(() => {
     setText(value);
   }, [value]);
 
+  // Auto-focus and select text when editing starts
   useEffect(() => {
     if (isEditing && inputRef.current) {
       inputRef.current.focus();

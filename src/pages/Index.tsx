@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+
+import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { departments } from "@/data/departments";
 import DepartmentCard from "@/components/DepartmentCard";
@@ -16,6 +16,7 @@ import { loadCompanyObjectives } from "@/utils/companyOkrUtils";
 import { toast } from "sonner";
 import StatusIcon from "@/components/StatusIcon";
 import ReadOnlyCompanyObjectiveList from "@/components/ReadOnlyCompanyObjectiveList";
+import { useQuery } from "@tanstack/react-query";
 
 const Index = () => {
   const { 
