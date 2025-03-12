@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,6 +17,25 @@ const Company = () => {
   useEffect(() => {
     document.title = "Company OKRs | DeepIP";
     setCompanyObjectives(loadCompanyObjectives());
+    
+    // Listen for storage events to keep the UI in sync across tabs
+    const handleStorageChange = (event: StorageEvent) => {
+      if (event.key === 'company_objectives') {
+        try {
+          if (event.newValue) {
+            setCompanyObjectives(JSON.parse(event.newValue));
+          }
+        } catch (e) {
+          console.error('Failed to parse company objectives from storage event', e);
+        }
+      }
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+    };
   }, []);
 
   // Save company objectives when they change

@@ -3,10 +3,11 @@ import { CompanyKeyResult, CompanyObjective } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 
 export const createNewCompanyObjective = (): CompanyObjective => {
+  const newId = uuidv4();
   return {
-    id: uuidv4(),
+    id: newId,
     title: "New Company Objective",
-    keyResults: [createNewCompanyKeyResult(uuidv4())]
+    keyResults: [createNewCompanyKeyResult(newId)]
   };
 };
 
