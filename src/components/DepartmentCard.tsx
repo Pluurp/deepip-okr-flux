@@ -33,9 +33,35 @@ const DepartmentCard = ({
     return <XCircle className="h-4 w-4 text-red-600" />;
   };
 
+  // Get transparent version of the department color for hover effect
+  const getHoverBgColor = (color: string) => {
+    // Convert color to RGB with high transparency
+    const hexToRgba = (hex: string, alpha = 0.1) => {
+      // Remove # if present
+      hex = hex.replace('#', '');
+      
+      // Parse hex values to RGB
+      const r = parseInt(hex.substring(0, 2), 16);
+      const g = parseInt(hex.substring(2, 4), 16);
+      const b = parseInt(hex.substring(4, 6), 16);
+      
+      return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    };
+    
+    return hexToRgba(color);
+  };
+
   return (
     <Link to={`/departments/${department.id}`}>
-      <Card className={cn("overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1", className)}>
+      <Card 
+        className={cn(
+          "overflow-hidden transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-current", 
+          className
+        )}
+        style={{ 
+          '--hover-bg': getHoverBgColor(department.color) 
+        } as React.CSSProperties}
+      >
         <div className="h-1.5" style={{ backgroundColor: department.color }}></div>
         <CardHeader className="pb-2">
           <CardTitle className="text-lg font-medium" style={{ color: department.color }}>

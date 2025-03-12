@@ -5,7 +5,7 @@ import { departments, getDepartmentColor } from "@/data/departments";
 import DepartmentCard from "@/components/DepartmentCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle, AlertTriangle, XCircle } from "lucide-react";
+import { ArrowRight, CheckCircle, AlertTriangle, XCircle, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useOKR } from "@/context/OKRContext";
 import ReadOnlyCompanyObjectiveList from "@/components/ReadOnlyCompanyObjectiveList";
@@ -20,6 +20,7 @@ const Index = () => {
     getCurrentDate,
     globalStartDate,
     globalEndDate,
+    cycle
   } = useOKR();
 
   useEffect(() => {
@@ -91,7 +92,12 @@ const Index = () => {
     <DashboardLayout>
       <div className="animate-fade-in">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+            <p className="text-gray-500 mt-1">
+              Current OKR Cycle: <span className="font-medium text-deepip-primary">{cycle}</span>
+            </p>
+          </div>
         </div>
 
         {/* Company Overview Card */}
@@ -202,9 +208,9 @@ const Index = () => {
             {/* Company Objectives Section (Read-Only) */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-semibold">Company Objectives & Key Results</h3>
+                <h3 className="text-lg font-semibold text-deepip-primary">Company Objectives & Key Results</h3>
                 <Link to="/company">
-                  <Button variant="outline" className="flex items-center gap-1">
+                  <Button variant="outline" className="flex items-center gap-1 hover:bg-deepip-primary hover:text-white">
                     Manage Company OKRs
                     <ArrowRight size={16} />
                   </Button>

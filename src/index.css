@@ -140,4 +140,9 @@
   .animate-enter {
     @apply animate-slide-in;
   }
+  
+  /* Department card hover styles */
+  .Card:hover {
+    background-color: var(--hover-bg, rgba(75, 72, 255, 0.05));
+  }
 }
