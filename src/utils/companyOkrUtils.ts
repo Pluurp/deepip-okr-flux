@@ -33,5 +33,22 @@ export const loadCompanyObjectives = (): CompanyObjective[] => {
 
 // Save company objectives to localStorage
 export const saveCompanyObjectives = (objectives: CompanyObjective[]): void => {
-  localStorage.setItem('company_objectives', JSON.stringify(objectives));
+  try {
+    // Ensure each objective has a keyResults array
+    const validObjectives = objectives.map(obj => ({
+      ...obj,
+      keyResults: Array.isArray(obj.keyResults) ? obj.keyResults : []
+    }));
+    
+    localStorage.setItem('company_objectives', JSON.stringify(validObjectives));
+    
+    // Force a sync to storage
+    const event = new StorageEvent('storage', {
+      key: 'company_objectives',
+      newValue: JSON.stringify(validObjectives)
+    });
+    window.dispatchEvent(event);
+  } catch (e) {
+    console.error('Failed to save company objectives', e);
+  }
 };

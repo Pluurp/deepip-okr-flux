@@ -22,17 +22,21 @@ const Company = () => {
 
   // Save company objectives when they change
   useEffect(() => {
-    saveCompanyObjectives(companyObjectives);
+    if (companyObjectives.length > 0) {
+      saveCompanyObjectives(companyObjectives);
+    }
   }, [companyObjectives]);
 
   const handleAddObjective = () => {
     const newObjective = createNewCompanyObjective();
     setCompanyObjectives([...companyObjectives, newObjective]);
+    saveCompanyObjectives([...companyObjectives, newObjective]);
     toast.success("New company objective added");
   };
 
   const handleUpdateObjectives = (updatedObjectives: CompanyObjective[]) => {
     setCompanyObjectives(updatedObjectives);
+    saveCompanyObjectives(updatedObjectives);
   };
 
   const formatDate = (dateString: string) => {
