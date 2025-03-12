@@ -154,4 +154,44 @@
   .plane-input {
     @apply rounded-md border border-gray-300 shadow-sm focus:ring-1 focus:ring-deepip-primary focus:border-deepip-primary transition-colors duration-200;
   }
+
+  .mobile-menu-item {
+    @apply text-xl text-white/90 font-normal transition-all duration-200 ease-out;
+  }
+
+  .mobile-btn {
+    @apply w-full py-4 text-lg rounded-xl transition-all duration-200;
+  }
+}
+
+@layer utilities {
+  .animate-menu-in {
+    animation: menuIn 0.3s ease-out forwards;
+  }
+
+  .animate-menu-out {
+    animation: menuOut 0.3s ease-out forwards;
+  }
+}
+
+@keyframes menuIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes menuOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
 }

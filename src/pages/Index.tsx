@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+
+import { useEffect, useMemo } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { departments } from "@/data/departments";
 import DepartmentCard from "@/components/DepartmentCard";
@@ -35,7 +36,6 @@ const Index = () => {
   
   const formatDate = (dateString: string) => {
     try {
-      // Fix: The format function requires a format string as the second argument
       return format(new Date(dateString), "MMMM d, yyyy");
     } catch (e) {
       return "Invalid date";
