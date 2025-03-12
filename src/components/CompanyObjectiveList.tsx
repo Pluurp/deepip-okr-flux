@@ -1,3 +1,4 @@
+
 import React from "react";
 import { CompanyObjective, CompanyKeyResult } from "@/types";
 import { Card, CardContent } from "./ui/card";
@@ -14,11 +15,7 @@ type CompanyObjectiveListProps = {
   onUpdate?: (objectives: CompanyObjective[]) => void;
 };
 
-const CompanyObjectiveList = ({ 
-  objectives, 
-  className, 
-  onUpdate 
-}: CompanyObjectiveListProps) => {
+const CompanyObjectiveList = ({ objectives, className, onUpdate }: CompanyObjectiveListProps) => {
   const handleObjectiveTitleChange = (objective: CompanyObjective, newTitle: string) => {
     if (!onUpdate) return;
     
@@ -71,7 +68,6 @@ const CompanyObjectiveList = ({
     
     const updatedObjectives = objectives.map(obj => {
       if (obj.id === keyResult.objectiveId) {
-        // Don't delete if it's the only key result
         if (obj.keyResults.length <= 1) {
           toast.error("Cannot delete the only key result");
           return obj;
@@ -98,9 +94,9 @@ const CompanyObjectiveList = ({
   };
 
   return (
-    <div className={cn("space-y-6 font-inter", className)}>
+    <div className={cn("space-y-6", className)}>
       {objectives.map((objective) => (
-        <Card key={objective.id} className="overflow-hidden shadow-plane bg-white border border-gray-200 animate-scale-in">
+        <Card key={objective.id} className="overflow-hidden border border-gray-200 bg-white shadow-plane animate-scale-in">
           <div className="p-4 border-b bg-deepip-light-gray/30">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">
