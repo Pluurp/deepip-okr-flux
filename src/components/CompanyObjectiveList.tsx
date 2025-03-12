@@ -103,8 +103,8 @@ const CompanyObjectiveList = ({
   return (
     <div className={cn("space-y-6", className)}>
       {objectives.map((objective) => (
-        <Card key={objective.id} className="overflow-hidden">
-          <div className="p-4 border-b bg-gray-50">
+        <Card key={objective.id} className="overflow-hidden shadow-plane bg-white border border-gray-200 animate-scale-in">
+          <div className="p-4 border-b bg-deepip-light-gray/30">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">
                 <EditableText
@@ -118,7 +118,7 @@ const CompanyObjectiveList = ({
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 shadow-sm hover:shadow-none transition-shadow"
                   onClick={() => handleAddKeyResult(objective)}
                 >
                   <PlusCircle size={16} />
@@ -127,7 +127,7 @@ const CompanyObjectiveList = ({
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 shadow-sm hover:shadow-none transition-shadow"
                   onClick={() => handleDeleteObjective(objective)}
                 >
                   <Trash2 size={16} />
@@ -139,9 +139,9 @@ const CompanyObjectiveList = ({
           
           <CardContent className="p-4">
             <div className="space-y-4">
-              <h4 className="font-medium text-gray-700">Key Results</h4>
+              <h4 className="font-medium text-deepip-gray">Key Results</h4>
               {objective.keyResults.map((kr) => (
-                <div key={kr.id} className="flex items-center justify-between border-b pb-3">
+                <div key={kr.id} className="flex items-center justify-between border-b pb-3 hover:bg-deepip-light-gray/20 p-2 rounded-md transition-colors">
                   <EditableText
                     value={kr.title}
                     onChange={(newTitle) => handleKeyResultTitleChange(kr, newTitle)}
@@ -150,7 +150,7 @@ const CompanyObjectiveList = ({
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                    className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-full"
                     onClick={() => handleDeleteKeyResult(kr)}
                   >
                     <Trash2 size={16} />

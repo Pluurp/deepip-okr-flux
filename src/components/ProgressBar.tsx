@@ -57,7 +57,7 @@ const ProgressBar = ({
     <div className={cn("w-full", className)}>
       <div className="flex justify-between items-center mb-1">
         {showLabel && (
-          <div className="flex justify-between w-full text-xs text-gray-600">
+          <div className="flex justify-between w-full text-xs text-deepip-gray">
             <span>Progress</span>
             <span className="font-medium">{value}%</span>
           </div>

@@ -7,7 +7,7 @@ import EditableText from "./EditableText";
 import EditableNumber from "./EditableNumber";
 import EditableSelect from "./EditableSelect";
 import { Button } from "./ui/button";
-import { PlusCircle, Trash2, Calendar } from "lucide-react";
+import { PlusCircle, Trash2 } from "lucide-react";
 import { calculateProgress, createNewKeyResult, getStatusFromProgress } from "@/utils/okrUtils";
 import { toast } from "sonner";
 import StatusIcon from "./StatusIcon";
@@ -207,8 +207,8 @@ const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveList
   return (
     <div className={cn("space-y-8", className)}>
       {objectives.map((objective) => (
-        <div key={objective.id} className="border rounded-lg overflow-hidden bg-white">
-          <div className="p-4 border-b bg-gray-50">
+        <div key={objective.id} className="border rounded-lg overflow-hidden bg-white shadow-plane animate-scale-in">
+          <div className="p-4 border-b bg-deepip-light-gray/30">
             <div className="flex justify-between items-center">
               <h3 className="text-lg font-medium">
                 <EditableText
@@ -218,7 +218,7 @@ const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveList
                 />
               </h3>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-gray-500">Progress:</span>
+                <span className="text-sm text-deepip-gray">Progress:</span>
                 <span className="font-medium">{objective.progress}%</span>
               </div>
             </div>
@@ -233,7 +233,7 @@ const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveList
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="flex items-center gap-1"
+                  className="flex items-center gap-1 shadow-sm hover:shadow-none transition-shadow"
                   onClick={() => handleAddKeyResult(objective)}
                 >
                   <PlusCircle size={16} />
@@ -242,7 +242,7 @@ const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveList
                 <Button 
                   variant="outline" 
                   size="sm"
-                  className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  className="flex items-center gap-1 text-red-600 hover:text-red-700 hover:bg-red-50 shadow-sm hover:shadow-none transition-shadow"
                   onClick={() => handleDeleteObjective(objective)}
                 >
                   <Trash2 size={16} />
@@ -255,21 +255,21 @@ const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveList
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-gray-50 border-b">
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Key Result</th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Metric</th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Start</th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Target</th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Current</th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Progress</th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Owner</th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Status</th>
-                  <th className="px-4 py-2 text-left font-medium text-gray-500">Actions</th>
+                <tr className="bg-deepip-light-gray/30 border-b">
+                  <th className="px-4 py-2 text-left font-medium text-deepip-gray">Key Result</th>
+                  <th className="px-4 py-2 text-left font-medium text-deepip-gray">Metric</th>
+                  <th className="px-4 py-2 text-left font-medium text-deepip-gray">Start</th>
+                  <th className="px-4 py-2 text-left font-medium text-deepip-gray">Target</th>
+                  <th className="px-4 py-2 text-left font-medium text-deepip-gray">Current</th>
+                  <th className="px-4 py-2 text-left font-medium text-deepip-gray">Progress</th>
+                  <th className="px-4 py-2 text-left font-medium text-deepip-gray">Owner</th>
+                  <th className="px-4 py-2 text-left font-medium text-deepip-gray">Status</th>
+                  <th className="px-4 py-2 text-left font-medium text-deepip-gray">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {objective.keyResults.map((kr) => (
-                  <tr key={kr.id} className="border-b hover:bg-gray-50">
+                  <tr key={kr.id} className="border-b hover:bg-deepip-light-gray/20 transition-colors">
                     <td className="px-4 py-3">
                       <EditableText
                         value={kr.title}
@@ -348,7 +348,7 @@ const ObjectiveList = ({ objectives, users, className, onUpdate }: ObjectiveList
                       <Button
                         variant="ghost"
                         size="sm"
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-full"
                         onClick={() => handleDeleteKeyResult(kr)}
                       >
                         <Trash2 size={16} />

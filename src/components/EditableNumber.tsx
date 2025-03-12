@@ -71,13 +71,13 @@ const EditableNumber = ({
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       className={cn(
-        "px-1 py-0.5 w-full border border-gray-300 rounded focus:outline-none focus:ring-1 focus:ring-deepip-primary",
+        "px-2 py-1 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-deepip-primary transition-colors duration-200",
         className
       )}
     />
   ) : (
     <div 
-      className={cn("px-1 py-0.5 cursor-pointer hover:bg-gray-100 rounded", className)}
+      className={cn("px-2 py-1 cursor-pointer hover:bg-deepip-light-gray/50 rounded-md transition-colors", className)}
       onDoubleClick={handleDoubleClick}
     >
       {value}{suffix}
