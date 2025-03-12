@@ -1,39 +1,38 @@
 
-import { BrowserRouter as Router, Route, Routes, Navigate } from "react-router-dom";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { OKRProvider } from "./context/OKRContext";
-import { Toaster } from "./components/ui/toaster";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Index from "./pages/Index";
-import Company from "./pages/Company";
 import Department from "./pages/Department";
 import Objective from "./pages/Objective";
-import Timeline from "./pages/Timeline";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
-import "./App.css";
+import Company from "./pages/Company";
+import { OKRProvider } from "./context/OKRContext";
 
 const queryClient = new QueryClient();
 
-function App() {
-  return (
-    <QueryClientProvider client={queryClient}>
+const App = () => (
+  <QueryClientProvider client={queryClient}>
+    <BrowserRouter>
       <OKRProvider>
-        <Router>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/company" element={<Company />} />
-            <Route path="/departments/:departmentId" element={<Department />} />
-            <Route path="/objectives/:objectiveId" element={<Objective />} />
-            <Route path="/timeline" element={<Timeline />} />
+            <Route path="/departments/:id" element={<Department />} />
+            <Route path="/objectives/:id" element={<Objective />} />
             <Route path="/settings" element={<Settings />} />
-            <Route path="/404" element={<NotFound />} />
-            <Route path="*" element={<Navigate to="/404" replace />} />
+            <Route path="/company" element={<Company />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
-          <Toaster />
-        </Router>
+        </TooltipProvider>
       </OKRProvider>
-    </QueryClientProvider>
-  );
-}
+    </BrowserRouter>
+  </QueryClientProvider>
+);
 
 export default App;
