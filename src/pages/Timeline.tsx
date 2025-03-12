@@ -22,16 +22,13 @@ const Timeline = () => {
   const [view, setView] = useState<"day" | "week" | "month" | "quarter">("week");
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isTimelineVisible, setIsTimelineVisible] = useState(false);
-
-  // Ensure timeline visibility after initial render
-  useEffect(() => {
-    setTimeout(() => {
-      setIsTimelineVisible(true);
-    }, 100);
-  }, []);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Load any existing key results on mount
   useEffect(() => {
+    // First set visible to true to ensure the timeline container is rendered
+    setIsTimelineVisible(true);
+    
     const savedData = localStorage.getItem('timeline_data');
     if (savedData) {
       try {
@@ -67,6 +64,11 @@ const Timeline = () => {
         console.error('Failed to parse timeline data:', e);
       }
     }
+    
+    // Set loading to false after a small delay to ensure rendering is complete
+    setTimeout(() => {
+      setIsLoading(false);
+    }, 300);
   }, [objectives]);
 
   const handleKeyResultSelect = (keyResult: KeyResult) => {
@@ -86,6 +88,11 @@ const Timeline = () => {
   const handleRemoveKeyResult = (keyResultId: string) => {
     setSelectedKeyResults(prev => prev.filter(kr => kr.id !== keyResultId));
   };
+
+  // Check if there are any objectives with key results
+  const hasKeyResults = Object.values(objectives).some(
+    (deptObjectives) => deptObjectives.some((obj) => obj.keyResults.length > 0)
+  );
 
   return (
     <DashboardLayout>
@@ -123,8 +130,16 @@ const Timeline = () => {
                     <h3 className="text-sm font-medium mb-2">Selected Key Results:</h3>
                     <ul className="space-y-2">
                       {selectedKeyResults.map(kr => (
-                        <li key={kr.id} className="text-xs bg-gray-50 p-2 rounded-md">
-                          {kr.title}
+                        <li key={kr.id} className="text-xs bg-gray-50 p-2 rounded-md flex justify-between items-center">
+                          <span className="truncate pr-2">{kr.title}</span>
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-5 w-5 text-gray-500 hover:text-gray-700"
+                            onClick={() => handleRemoveKeyResult(kr.id)}
+                          >
+                            <ArrowRight className="h-3 w-3" />
+                          </Button>
                         </li>
                       ))}
                     </ul>
@@ -194,10 +209,21 @@ const Timeline = () => {
                 </div>
               </CardHeader>
               <CardContent className="p-0 overflow-hidden">
-                {/* Show loading message until timeline is ready */}
-                {!isTimelineVisible ? (
+                {isLoading ? (
                   <div className="flex items-center justify-center h-[400px]">
                     <p className="text-gray-500">Loading timeline...</p>
+                  </div>
+                ) : !hasKeyResults ? (
+                  <div className="flex flex-col items-center justify-center h-[400px] text-center p-6">
+                    <Calendar className="h-12 w-12 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No key results available</h3>
+                    <p className="text-gray-500 max-w-md">
+                      You need to create key results in your department pages first.
+                    </p>
+                  </div>
+                ) : !isTimelineVisible ? (
+                  <div className="flex items-center justify-center h-[400px]">
+                    <p className="text-gray-500">Initializing timeline view...</p>
                   </div>
                 ) : selectedKeyResults.length === 0 ? (
                   <div className="flex flex-col items-center justify-center h-[400px] text-center p-6">

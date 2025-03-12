@@ -1,3 +1,4 @@
+
 import { useEffect, useState, useRef } from "react";
 import { KeyResult } from "@/types";
 import { useOKR } from "@/context/OKRContext";
@@ -51,47 +52,55 @@ const TimelineView = ({
   const timelineRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const savedData = localStorage.getItem('timeline_data');
-    if (savedData) {
-      try {
-        const parsed = JSON.parse(savedData);
-        const items = parsed.items.map((item: any) => ({
-          ...item,
-          startDate: new Date(item.startDate),
-          endDate: new Date(item.endDate)
-        }));
-        setTimelineData({ items });
-        
-        items.forEach((item: TimelineItem) => {
-          const keyResult = selectedKeyResults.find(kr => kr.id === item.keyResultId);
-          if (!keyResult) {
-            const allDepartments = ['leadership', 'product', 'ai', 'sales', 'growth'];
-            let foundKeyResult: KeyResult | undefined;
-            
-            for (const deptId of allDepartments) {
-              for (const objective of objectives[deptId] || []) {
-                const kr = objective.keyResults.find(kr => kr.id === item.keyResultId);
-                if (kr) {
-                  foundKeyResult = kr;
-                  break;
+    // Load timeline data from localStorage
+    const loadTimelineData = () => {
+      const savedData = localStorage.getItem('timeline_data');
+      if (savedData) {
+        try {
+          const parsed = JSON.parse(savedData);
+          const items = (parsed.items || []).map((item: any) => ({
+            ...item,
+            startDate: new Date(item.startDate),
+            endDate: new Date(item.endDate)
+          }));
+          
+          setTimelineData({ items });
+          
+          // Find any key results that are on the timeline but not in selectedKeyResults
+          items.forEach((item: TimelineItem) => {
+            const keyResult = selectedKeyResults.find(kr => kr.id === item.keyResultId);
+            if (!keyResult) {
+              const allDepartments = ['leadership', 'product', 'ai', 'sales', 'growth'];
+              let foundKeyResult: KeyResult | undefined;
+              
+              for (const deptId of allDepartments) {
+                for (const objective of objectives[deptId] || []) {
+                  const kr = objective.keyResults.find(kr => kr.id === item.keyResultId);
+                  if (kr) {
+                    foundKeyResult = kr;
+                    break;
+                  }
                 }
+                if (foundKeyResult) break;
               }
-              if (foundKeyResult) break;
             }
-            
-            if (foundKeyResult) {
-              onRemoveKeyResult(item.keyResultId);
-              selectedKeyResults.push(foundKeyResult);
-            }
-          }
-        });
-      } catch (e) {
-        console.error('Failed to parse timeline data:', e);
-        setTimelineData({ items: [] });
+          });
+        } catch (e) {
+          console.error('Failed to parse timeline data:', e);
+          setTimelineData({ items: [] });
+        }
       }
+    };
+    
+    loadTimelineData();
+    
+    // Reload when selected key results change
+    if (selectedKeyResults.length > 0) {
+      loadTimelineData();
     }
-  }, []);
+  }, [selectedKeyResults, objectives]);
 
+  // Save timeline data to localStorage whenever it changes
   useEffect(() => {
     localStorage.setItem('timeline_data', JSON.stringify(timelineData));
   }, [timelineData]);

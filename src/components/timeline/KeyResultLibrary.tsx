@@ -66,6 +66,7 @@ const KeyResultLibrary = ({ onKeyResultSelect }: KeyResultLibraryProps) => {
                           onClick={() => onKeyResultSelect(kr)}
                           draggable
                           onDragStart={(e) => handleDragStart(e, kr)}
+                          data-kr-id={kr.id}
                         >
                           <p className="text-sm">{kr.title}</p>
                           <div className="flex items-center gap-2 mt-1">
