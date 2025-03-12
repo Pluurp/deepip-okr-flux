@@ -1,4 +1,3 @@
-
 import type { Config } from "tailwindcss";
 
 export default {
@@ -78,6 +77,7 @@ export default {
 				}
 			},
 			fontFamily: {
+				inter: ['Inter', 'sans-serif'],
 				sans: ['Inter', 'sans-serif'],
 			},
 			borderRadius: {
