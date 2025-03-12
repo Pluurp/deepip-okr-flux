@@ -5,27 +5,27 @@ export const departments: Department[] = [
   {
     id: "leadership",
     name: "Leadership & Strategy",
-    color: "#4B48FF", // Changed to blue 🔵
+    color: "#4B48FF", // DeepIP primary blue
   },
   {
     id: "product",
     name: "Product & Technology",
-    color: "#4B48FF", // Blue 🔵
+    color: "#9b87f5", // Purple
   },
   {
     id: "ai",
     name: "AI & Machine Learning",
-    color: "#ea384c", // Red 🔴
+    color: "#7E69AB", // Secondary Purple
   },
   {
     id: "sales",
     name: "Sales & Customer Success",
-    color: "#FFB30F", // Yellow 🟡
+    color: "#6E59A5", // Tertiary Purple
   },
   {
     id: "growth",
     name: "Growth & Marketing",
-    color: "#45B36B", // Green 🟢
+    color: "#D6BCFA", // Light Purple
   },
 ];
 

@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useState } from "react";
 import { CompanyObjective, CompanyKeyResult } from "@/types";
 import { Card, CardContent } from "./ui/card";
 import { cn } from "@/lib/utils";
@@ -140,7 +140,7 @@ const CompanyObjectiveList = ({
           <CardContent className="p-4">
             <div className="space-y-4">
               <h4 className="font-medium text-gray-700">Key Results</h4>
-              {objective.keyResults && objective.keyResults.map((kr) => (
+              {objective.keyResults.map((kr) => (
                 <div key={kr.id} className="flex items-center justify-between border-b pb-3">
                   <EditableText
                     value={kr.title}

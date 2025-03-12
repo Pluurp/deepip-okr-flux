@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
@@ -17,44 +18,21 @@ const Company = () => {
   useEffect(() => {
     document.title = "Company OKRs | DeepIP";
     setCompanyObjectives(loadCompanyObjectives());
-    
-    // Listen for storage events to keep the UI in sync across tabs
-    const handleStorageChange = (event: StorageEvent) => {
-      if (event.key === 'company_objectives') {
-        try {
-          if (event.newValue) {
-            setCompanyObjectives(JSON.parse(event.newValue));
-          }
-        } catch (e) {
-          console.error('Failed to parse company objectives from storage event', e);
-        }
-      }
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-    };
   }, []);
 
   // Save company objectives when they change
   useEffect(() => {
-    if (companyObjectives.length > 0) {
-      saveCompanyObjectives(companyObjectives);
-    }
+    saveCompanyObjectives(companyObjectives);
   }, [companyObjectives]);
 
   const handleAddObjective = () => {
     const newObjective = createNewCompanyObjective();
     setCompanyObjectives([...companyObjectives, newObjective]);
-    saveCompanyObjectives([...companyObjectives, newObjective]);
     toast.success("New company objective added");
   };
 
   const handleUpdateObjectives = (updatedObjectives: CompanyObjective[]) => {
     setCompanyObjectives(updatedObjectives);
-    saveCompanyObjectives(updatedObjectives);
   };
 
   const formatDate = (dateString: string) => {

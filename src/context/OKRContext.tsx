@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback, useMemo } from 'react';
 import { Objective, DepartmentId } from '@/types';
 import { getObjectivesByDepartment, departmentStats as initialDepartmentStats } from '@/data/okrData';
@@ -90,15 +91,13 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
   const recalculateDepartmentStats = useCallback((departmentId: DepartmentId) => {
     const departmentObjectives = objectives[departmentId] || [];
     
-    // If no objectives, set progress to 0
-    let overallProgress = 0;
-    
-    if (departmentObjectives.length > 0) {
-      // Calculate overall progress from all objectives
-      overallProgress = Math.round(
-        departmentObjectives.reduce((sum, obj) => sum + obj.progress, 0) / departmentObjectives.length
-      );
-    }
+    // Skip if no objectives
+    if (departmentObjectives.length === 0) return;
+
+    // Calculate overall progress from all objectives
+    const overallProgress = Math.round(
+      departmentObjectives.reduce((sum, obj) => sum + obj.progress, 0) / departmentObjectives.length
+    );
 
     // Use the global dates for all time-based calculations
     const startDate = globalStartDate;
@@ -118,6 +117,17 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
 
     // Use functional update to ensure we're working with latest state
     setDepartmentStats(prev => {
+      // Only update if values have changed to avoid unnecessary renders
+      if (
+        prev[departmentId].daysRemaining === daysRemaining &&
+        prev[departmentId].totalDays === totalDays &&
+        prev[departmentId].timeProgress === parseFloat(timeProgress.toFixed(1)) &&
+        prev[departmentId].overallProgress === overallProgress
+      ) {
+        return prev;
+      }
+      
+      // Return new state object
       return {
         ...prev,
         [departmentId]: {
@@ -205,12 +215,9 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
       return newObjectives;
     });
 
-    // Force an immediate refresh of department stats to immediately reflect changes
-    // especially when objectives are deleted
-    setTimeout(() => {
-      recalculateDepartmentStats(departmentId);
-      setForceUpdateCounter(prev => prev + 1);
-    }, 0);
+    // Force an immediate refresh of department stats
+    recalculateDepartmentStats(departmentId);
+    setForceUpdateCounter(prev => prev + 1);
   }, [recalculateDepartmentStats]);
 
   // Load from localStorage on mount

@@ -106,8 +106,7 @@ const Department = () => {
               </span>
               <Button 
                 size="sm" 
-                className="flex items-center gap-1" 
-                style={{ backgroundColor: department.color, color: "white" }}
+                className="bg-deepip-primary text-white hover:bg-deepip-primary/90 flex items-center gap-1" 
                 onClick={handleAddObjective}
               >
                 <PlusCircle size={16} />
@@ -137,7 +136,7 @@ const Department = () => {
                 </div>
                 <ProgressBar 
                   value={Math.round(100 - (stats.daysRemaining / stats.totalDays * 100))} 
-                  color={department.color}
+                  variant="primary"
                   animate={false}
                   key={`days-${stats.daysRemaining}-${stats.totalDays}`}
                 />
@@ -149,7 +148,7 @@ const Department = () => {
                 </div>
                 <ProgressBar 
                   value={stats.timeProgress} 
-                  color={department.color}
+                  variant="primary"
                   animate={false}
                   key={`time-${stats.timeProgress}`}
                 />
@@ -161,7 +160,7 @@ const Department = () => {
                 </div>
                 <ProgressBar 
                   value={stats.overallProgress} 
-                  color={department.color}
+                  variant="primary"
                   animate={false}
                   key={`overall-${stats.overallProgress}`}
                 />
@@ -182,7 +181,6 @@ const Department = () => {
               <p className="text-gray-500 mb-4">No objectives defined for this department</p>
               <Button 
                 className="flex items-center gap-1"
-                style={{ backgroundColor: department.color, color: "white" }}
                 onClick={handleAddObjective}
               >
                 <PlusCircle size={16} />

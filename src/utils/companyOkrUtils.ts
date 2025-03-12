@@ -3,11 +3,10 @@ import { CompanyKeyResult, CompanyObjective } from "@/types";
 import { v4 as uuidv4 } from "uuid";
 
 export const createNewCompanyObjective = (): CompanyObjective => {
-  const newId = uuidv4();
   return {
-    id: newId,
+    id: uuidv4(),
     title: "New Company Objective",
-    keyResults: [createNewCompanyKeyResult(newId)]
+    keyResults: [createNewCompanyKeyResult(uuidv4())]
   };
 };
 
@@ -34,22 +33,5 @@ export const loadCompanyObjectives = (): CompanyObjective[] => {
 
 // Save company objectives to localStorage
 export const saveCompanyObjectives = (objectives: CompanyObjective[]): void => {
-  try {
-    // Ensure each objective has a keyResults array
-    const validObjectives = objectives.map(obj => ({
-      ...obj,
-      keyResults: Array.isArray(obj.keyResults) ? obj.keyResults : []
-    }));
-    
-    localStorage.setItem('company_objectives', JSON.stringify(validObjectives));
-    
-    // Force a sync to storage
-    const event = new StorageEvent('storage', {
-      key: 'company_objectives',
-      newValue: JSON.stringify(validObjectives)
-    });
-    window.dispatchEvent(event);
-  } catch (e) {
-    console.error('Failed to save company objectives', e);
-  }
+  localStorage.setItem('company_objectives', JSON.stringify(objectives));
 };
