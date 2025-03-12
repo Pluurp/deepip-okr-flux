@@ -11,6 +11,11 @@ interface KeyResultLibraryProps {
 const KeyResultLibrary = ({ onKeyResultSelect }: KeyResultLibraryProps) => {
   const { objectives } = useOKR();
 
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, keyResult: KeyResult) => {
+    e.dataTransfer.setData("text/plain", keyResult.id);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
   return (
     <ScrollArea className="h-[calc(100vh-250px)]">
       <div className="space-y-6 pr-4">
@@ -26,8 +31,10 @@ const KeyResultLibrary = ({ onKeyResultSelect }: KeyResultLibraryProps) => {
                   {objective.keyResults.map((kr) => (
                     <div
                       key={kr.id}
-                      className="p-2 rounded-md border cursor-pointer hover:bg-accent transition-colors"
+                      className="p-2 rounded-md border cursor-move hover:bg-accent transition-colors"
                       onClick={() => onKeyResultSelect(kr)}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, kr)}
                     >
                       <p className="text-sm">{kr.title}</p>
                       <div className="flex items-center gap-2 mt-1">

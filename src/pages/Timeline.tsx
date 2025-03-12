@@ -14,6 +14,7 @@ import {
   ArrowRight 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/use-toast";
 
 const Timeline = () => {
   const { cycle, objectives, getCurrentDate } = useOKR();
@@ -24,6 +25,24 @@ const Timeline = () => {
   useEffect(() => {
     document.title = "Timeline | DeepIP";
   }, []);
+
+  const handleKeyResultSelect = (keyResult: KeyResult) => {
+    // Check if key result is already selected
+    if (selectedKeyResults.some(kr => kr.id === keyResult.id)) {
+      toast({
+        title: "Already selected",
+        description: "This key result is already in your selection.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    setSelectedKeyResults(prev => [...prev, keyResult]);
+  };
+
+  const handleRemoveKeyResult = (keyResultId: string) => {
+    setSelectedKeyResults(prev => prev.filter(kr => kr.id !== keyResultId));
+  };
 
   return (
     <DashboardLayout>
@@ -48,7 +67,7 @@ const Timeline = () => {
               </CardHeader>
               <CardContent>
                 <KeyResultLibrary 
-                  onKeyResultSelect={(kr) => setSelectedKeyResults(prev => [...prev, kr])} 
+                  onKeyResultSelect={handleKeyResultSelect} 
                 />
               </CardContent>
             </Card>
@@ -116,6 +135,7 @@ const Timeline = () => {
                   view={view}
                   zoomLevel={zoomLevel}
                   selectedKeyResults={selectedKeyResults}
+                  onRemoveKeyResult={handleRemoveKeyResult}
                 />
               </CardContent>
             </Card>
