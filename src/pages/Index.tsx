@@ -10,7 +10,7 @@ import { useOKR } from "@/context/OKRContext";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import ObjectiveList from "@/components/ObjectiveList";
-import { Objective, CompanyObjective } from "@/types";
+import { Objective, CompanyObjective, DepartmentId } from "@/types";
 import { createNewObjective } from "@/utils/okrUtils";
 import { loadCompanyObjectives } from "@/utils/companyOkrUtils";
 import { toast } from "sonner";
@@ -26,7 +26,6 @@ const Index = () => {
     objectives: allDepartmentObjectives,
     refreshStats,
     updateObjectives,
-    users
   } = useOKR();
   
   // Add state for company objectives (read-only)
@@ -51,13 +50,9 @@ const Index = () => {
   };
   
   // Handle department objective updates
-  const handleAddDepartmentObjective = (departmentId: string) => {
-    // Find a default owner from the department
-    const departmentUser = users.find(user => user.departmentId === departmentId);
-    const defaultOwnerId = departmentUser ? departmentUser.id : users[0].id;
-    
+  const handleAddDepartmentObjective = (departmentId: DepartmentId) => {
     // Create new objective with global dates and cycle
-    const newObjective = createNewObjective(departmentId, defaultOwnerId);
+    const newObjective = createNewObjective(departmentId);
     
     // Override with global dates and cycle
     newObjective.startDate = globalStartDate;
@@ -259,9 +254,9 @@ const Index = () => {
               </div>
             </div>
             
-            <div className="mt-4 grid md:grid-cols-2 gap-4">
+            <div className="mt-6 grid md:grid-cols-2 gap-8">
               <div>
-                <h3 className="font-medium mb-4">Department Progress</h3>
+                <h3 className="font-medium mb-5">Department Progress</h3>
                 <div className="space-y-4">
                   {departments.map((dept) => (
                     <div key={dept.id} className="flex items-center">
@@ -288,8 +283,8 @@ const Index = () => {
               </div>
               
               <div>
-                <h3 className="font-medium mb-4">Key Statistics</h3>
-                <div className="grid grid-cols-2 gap-4">
+                <h3 className="font-medium mb-5">Key Statistics</h3>
+                <div className="grid grid-cols-2 gap-y-6 gap-x-4">
                   <div>
                     <p className="text-sm text-gray-500">Total Objectives</p>
                     <p className="text-2xl font-medium">{totalObjectives}</p>
