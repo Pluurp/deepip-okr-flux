@@ -31,7 +31,7 @@ const ReadOnlyCompanyObjectiveList = ({ objectives, className }: ReadOnlyCompany
           <CardContent className="p-5">
             <h3 className="text-lg font-medium mb-3">{objective.title}</h3>
             
-            {objective.keyResults.length > 0 ? (
+            {objective.keyResults && objective.keyResults.length > 0 ? (
               <div className="space-y-2 mt-4">
                 <h4 className="text-sm font-medium text-gray-500">Key Results:</h4>
                 <ul className="list-disc list-inside pl-3 text-gray-700 space-y-1">
