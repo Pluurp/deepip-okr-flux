@@ -15,6 +15,7 @@ import { loadCompanyObjectives } from "@/utils/companyOkrUtils";
 import { toast } from "sonner";
 import StatusIcon from "@/components/StatusIcon";
 import ReadOnlyCompanyObjectiveList from "@/components/ReadOnlyCompanyObjectiveList";
+import { useQuery } from "@tanstack/react-query";
 
 const Index = () => {
   const { 
@@ -119,6 +120,12 @@ const Index = () => {
       totalObjectives: allObjectives.length
     };
   }, [allDepartmentObjectives, contextStats]);
+
+  const { data: companyObjectives } = useQuery({
+    queryKey: ['company-objectives'],
+    queryFn: loadCompanyObjectives,
+    initialData: []
+  });
 
   return (
     <DashboardLayout>

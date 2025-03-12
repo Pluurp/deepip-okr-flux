@@ -35,12 +35,10 @@ const CompanyObjectiveList = ({
     
     const updatedObjectives = objectives.map(obj => {
       if (obj.id === keyResult.objectiveId) {
-        return {
-          ...obj,
-          keyResults: obj.keyResults.map(kr => 
-            kr.id === keyResult.id ? { ...kr, title: newTitle } : kr
-          )
-        };
+        const updatedKeyResults = obj.keyResults.map(kr => 
+          kr.id === keyResult.id ? { ...kr, title: newTitle } : kr
+        );
+        return { ...obj, keyResults: updatedKeyResults };
       }
       return obj;
     });
@@ -100,7 +98,7 @@ const CompanyObjectiveList = ({
   };
 
   return (
-    <div className={cn("space-y-6", className)}>
+    <div className={cn("space-y-6 font-inter", className)}>
       {objectives.map((objective) => (
         <Card key={objective.id} className="overflow-hidden shadow-plane bg-white border border-gray-200 animate-scale-in">
           <div className="p-4 border-b bg-deepip-light-gray/30">
