@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,6 +9,7 @@ import Objective from "./pages/Objective";
 import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import Company from "./pages/Company";
+import Timeline from "./pages/Timeline";
 import { OKRProvider } from "./context/OKRContext";
 
 const queryClient = new QueryClient();
@@ -23,6 +23,7 @@ const App = () => (
           <Sonner />
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/timeline" element={<Timeline />} />
             <Route path="/departments/:id" element={<Department />} />
             <Route path="/objectives/:id" element={<Objective />} />
             <Route path="/settings" element={<Settings />} />

@@ -44,7 +44,7 @@ const Index = () => {
   };
   
   const handleAddDepartmentObjective = (departmentId: DepartmentId) => {
-    const newObjective = createNewObjective(departmentId);
+    const newObjective = createNewObjective(departmentId, "user1");
     newObjective.startDate = globalStartDate;
     newObjective.endDate = globalEndDate;
     newObjective.cycle = cycle;
