@@ -1,7 +1,8 @@
+
 import { Link } from "react-router-dom";
 import Logo from "./Logo";
 import { Button } from "@/components/ui/button";
-import { X, Menu, ChevronDown } from "lucide-react";
+import { X, Menu, ChevronDown, Settings } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
