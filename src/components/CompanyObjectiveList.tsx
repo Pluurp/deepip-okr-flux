@@ -1,5 +1,5 @@
 
-import React, { useState } from "react";
+import React from "react";
 import { CompanyObjective, CompanyKeyResult } from "@/types";
 import { Card, CardContent } from "./ui/card";
 import { cn } from "@/lib/utils";

@@ -49,14 +49,7 @@ const ReadOnlyCompanyObjectiveList = ({ objectives, className }: ReadOnlyCompany
         ))}
       </div>
       
-      <div className="flex justify-end mt-4">
-        <Link to="/company">
-          <Button variant="outline" className="flex items-center gap-1">
-            Manage Company OKRs
-            <ArrowRight size={16} />
-          </Button>
-        </Link>
-      </div>
+      {/* Remove the duplicate "Manage Company OKRs" button that appears at the bottom */}
     </div>
   );
 };
