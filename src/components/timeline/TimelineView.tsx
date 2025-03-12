@@ -258,7 +258,7 @@ const TimelineView = ({
     
     toast({
       title: "Added to timeline",
-      description: `"${draggedItem.title}" has been added to the timeline.",
+      description: "\"" + draggedItem.title + "\" has been added to the timeline.",
     });
     
     setDraggedItem(null);
@@ -514,7 +514,7 @@ const TimelineView = ({
         </Button>
         <div className="text-sm text-gray-500">
           {viewStartDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-          {view === 'quarter' && ` - ${cycle}`}
+          {view === 'quarter' && (" - " + cycle)}
         </div>
         <Button
           variant="outline"
