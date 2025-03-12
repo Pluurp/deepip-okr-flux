@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { useOKR } from "@/context/OKRContext";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +8,7 @@ import KeyResultLibrary from "@/components/timeline/KeyResultLibrary";
 import TimelineView from "@/components/timeline/TimelineView";
 import { 
   ZoomIn, 
-  ZoomOut, 
+  ZoomOut,
   Calendar,
   ArrowLeft,
   ArrowRight 
@@ -17,10 +17,57 @@ import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
 
 const Timeline = () => {
-  const { cycle } = useOKR();
+  const { cycle, objectives } = useOKR();
   const [selectedKeyResults, setSelectedKeyResults] = useState<KeyResult[]>([]);
   const [view, setView] = useState<"day" | "week" | "month" | "quarter">("week");
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [isTimelineVisible, setIsTimelineVisible] = useState(false);
+
+  // Ensure timeline visibility after initial render
+  useEffect(() => {
+    setTimeout(() => {
+      setIsTimelineVisible(true);
+    }, 100);
+  }, []);
+
+  // Load any existing key results on mount
+  useEffect(() => {
+    const savedData = localStorage.getItem('timeline_data');
+    if (savedData) {
+      try {
+        const parsed = JSON.parse(savedData);
+        // Find and add key results that are on the timeline
+        if (parsed.items && parsed.items.length > 0) {
+          const allDepartments = ['leadership', 'product', 'ai', 'sales', 'growth'];
+          const keyResultsToAdd: KeyResult[] = [];
+          
+          parsed.items.forEach((item: any) => {
+            let found = false;
+            
+            // Check all departments for the key result
+            for (const deptId of allDepartments) {
+              if (found) break;
+              
+              for (const objective of objectives[deptId] || []) {
+                const kr = objective.keyResults.find(kr => kr.id === item.keyResultId);
+                if (kr) {
+                  keyResultsToAdd.push(kr);
+                  found = true;
+                  break;
+                }
+              }
+            }
+          });
+          
+          if (keyResultsToAdd.length > 0) {
+            setSelectedKeyResults(keyResultsToAdd);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to parse timeline data:', e);
+      }
+    }
+  }, [objectives]);
 
   const handleKeyResultSelect = (keyResult: KeyResult) => {
     // Check if key result is already selected
@@ -65,6 +112,24 @@ const Timeline = () => {
                 <KeyResultLibrary 
                   onKeyResultSelect={handleKeyResultSelect} 
                 />
+                {selectedKeyResults.length === 0 && (
+                  <div className="text-sm text-gray-500 mt-4 p-4 bg-gray-50 rounded-md">
+                    <p>No key results selected yet.</p>
+                    <p className="mt-2">Click on a key result from the list above to add it to your timeline.</p>
+                  </div>
+                )}
+                {selectedKeyResults.length > 0 && (
+                  <div className="mt-4">
+                    <h3 className="text-sm font-medium mb-2">Selected Key Results:</h3>
+                    <ul className="space-y-2">
+                      {selectedKeyResults.map(kr => (
+                        <li key={kr.id} className="text-xs bg-gray-50 p-2 rounded-md">
+                          {kr.title}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -128,13 +193,28 @@ const Timeline = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="p-0">
-                <TimelineView 
-                  view={view}
-                  zoomLevel={zoomLevel}
-                  selectedKeyResults={selectedKeyResults}
-                  onRemoveKeyResult={handleRemoveKeyResult}
-                />
+              <CardContent className="p-0 overflow-hidden">
+                {/* Show loading message until timeline is ready */}
+                {!isTimelineVisible ? (
+                  <div className="flex items-center justify-center h-[400px]">
+                    <p className="text-gray-500">Loading timeline...</p>
+                  </div>
+                ) : selectedKeyResults.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-[400px] text-center p-6">
+                    <Calendar className="h-12 w-12 text-gray-300 mb-4" />
+                    <h3 className="text-lg font-medium mb-2">No key results on timeline</h3>
+                    <p className="text-gray-500 max-w-md">
+                      Select key results from the library on the left, then drag and drop them onto the timeline to schedule them.
+                    </p>
+                  </div>
+                ) : (
+                  <TimelineView 
+                    view={view}
+                    zoomLevel={zoomLevel}
+                    selectedKeyResults={selectedKeyResults}
+                    onRemoveKeyResult={handleRemoveKeyResult}
+                  />
+                )}
               </CardContent>
             </Card>
           </div>
