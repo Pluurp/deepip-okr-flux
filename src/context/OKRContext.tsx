@@ -91,13 +91,10 @@ export const OKRProvider = ({ children }: { children: ReactNode }) => {
   const recalculateDepartmentStats = useCallback((departmentId: DepartmentId) => {
     const departmentObjectives = objectives[departmentId] || [];
     
-    // Skip if no objectives
-    if (departmentObjectives.length === 0) return;
-
-    // Calculate overall progress from all objectives
-    const overallProgress = Math.round(
-      departmentObjectives.reduce((sum, obj) => sum + obj.progress, 0) / departmentObjectives.length
-    );
+    // Calculate overall progress from all objectives, or set to 0 if no objectives
+    const overallProgress = departmentObjectives.length === 0 
+      ? 0 
+      : Math.round(departmentObjectives.reduce((sum, obj) => sum + obj.progress, 0) / departmentObjectives.length);
 
     // Use the global dates for all time-based calculations
     const startDate = globalStartDate;

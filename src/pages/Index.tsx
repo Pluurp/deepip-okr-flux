@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { departments } from "@/data/departments";
@@ -289,11 +290,11 @@ const Index = () => {
               <div>
                 <h3 className="font-medium mb-4">Key Statistics</h3>
                 <div className="grid grid-cols-2 gap-4">
-                  <Card className="p-4 border shadow-sm">
+                  <div>
                     <p className="text-sm text-gray-500">Total Objectives</p>
                     <p className="text-2xl font-medium">{totalObjectives}</p>
-                  </Card>
-                  <Card className="p-4 border shadow-sm flex items-center">
+                  </div>
+                  <div className="flex items-center">
                     <div className="mr-2">
                       <StatusIcon status="On track" size={20} />
                     </div>
@@ -301,8 +302,8 @@ const Index = () => {
                       <p className="text-sm text-gray-500">On Track</p>
                       <p className="text-2xl font-medium text-green-600">{statusCounts.onTrack}%</p>
                     </div>
-                  </Card>
-                  <Card className="p-4 border shadow-sm flex items-center">
+                  </div>
+                  <div className="flex items-center">
                     <div className="mr-2">
                       <StatusIcon status="At Risk" size={20} />
                     </div>
@@ -310,8 +311,8 @@ const Index = () => {
                       <p className="text-sm text-gray-500">At Risk</p>
                       <p className="text-2xl font-medium text-yellow-600">{statusCounts.atRisk}%</p>
                     </div>
-                  </Card>
-                  <Card className="p-4 border shadow-sm flex items-center">
+                  </div>
+                  <div className="flex items-center">
                     <div className="mr-2">
                       <StatusIcon status="Off Track" size={20} />
                     </div>
@@ -319,7 +320,7 @@ const Index = () => {
                       <p className="text-sm text-gray-500">Off Track</p>
                       <p className="text-2xl font-medium text-red-600">{statusCounts.offTrack}%</p>
                     </div>
-                  </Card>
+                  </div>
                 </div>
               </div>
             </div>
