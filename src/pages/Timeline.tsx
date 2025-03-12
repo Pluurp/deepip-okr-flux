@@ -60,7 +60,7 @@ const Timeline = () => {
 
         <div className="grid grid-cols-12 gap-6">
           {/* Key Results Library */}
-          <div className="col-span-3">
+          <div className="col-span-12 md:col-span-3">
             <Card className="border-0 shadow-sm">
               <CardHeader>
                 <CardTitle>Key Results Library</CardTitle>
@@ -74,16 +74,17 @@ const Timeline = () => {
           </div>
 
           {/* Timeline View */}
-          <div className="col-span-9">
+          <div className="col-span-12 md:col-span-9">
             <Card className="border-0 shadow-sm">
               <CardHeader className="border-b">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   <CardTitle>Timeline View</CardTitle>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <Button
                       variant="outline"
                       size="icon"
                       onClick={() => setZoomLevel(prev => Math.max(0.5, prev - 0.1))}
+                      title="Zoom out"
                     >
                       <ZoomOut className="h-4 w-4" />
                     </Button>
@@ -91,10 +92,11 @@ const Timeline = () => {
                       variant="outline"
                       size="icon"
                       onClick={() => setZoomLevel(prev => Math.min(2, prev + 0.1))}
+                      title="Zoom in"
                     >
                       <ZoomIn className="h-4 w-4" />
                     </Button>
-                    <div className="w-px h-6 bg-gray-200 mx-2" />
+                    <div className="w-px h-6 bg-gray-200 mx-2 hidden sm:block" />
                     <Button
                       variant="outline"
                       size="sm"
@@ -130,7 +132,7 @@ const Timeline = () => {
                   </div>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-0">
                 <TimelineView 
                   view={view}
                   zoomLevel={zoomLevel}

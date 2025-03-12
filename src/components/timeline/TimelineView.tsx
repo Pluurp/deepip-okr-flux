@@ -64,6 +64,32 @@ const TimelineView = ({
           endDate: new Date(item.endDate)
         }));
         setTimelineData({ items });
+        
+        // Make sure the selectedKeyResults state includes any saved timeline items
+        items.forEach((item: TimelineItem) => {
+          const keyResult = selectedKeyResults.find(kr => kr.id === item.keyResultId);
+          if (!keyResult) {
+            // Find the key result from objectives
+            const allDepartments = ['leadership', 'product', 'ai', 'sales', 'growth'];
+            let foundKeyResult: KeyResult | undefined;
+            
+            for (const deptId of allDepartments) {
+              for (const objective of objectives[deptId] || []) {
+                const kr = objective.keyResults.find(kr => kr.id === item.keyResultId);
+                if (kr) {
+                  foundKeyResult = kr;
+                  break;
+                }
+              }
+              if (foundKeyResult) break;
+            }
+            
+            if (foundKeyResult) {
+              onRemoveKeyResult(item.keyResultId); // First remove to avoid duplicates
+              selectedKeyResults.push(foundKeyResult);
+            }
+          }
+        });
       } catch (e) {
         console.error('Failed to parse timeline data:', e);
         setTimelineData({ items: [] });
@@ -447,8 +473,7 @@ const TimelineView = ({
     
     // Find department color
     const department = departments
-      .find(dept => selectedKeyResults
-        .some(kr => kr.objectiveId === objective.objectiveId && kr.id === objective.id));
+      .find(dept => objectives[dept.id]?.some(obj => obj.id === (objective.objectiveId || objective.id)));
     
     return department?.color || "#9b87f5"; // Default to purple if not found
   };
@@ -543,7 +568,7 @@ const TimelineView = ({
   return (
     <div className="flex flex-col h-full">
       {/* Timeline navigation controls */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 p-4">
         <Button
           variant="outline"
           size="sm"
@@ -567,7 +592,7 @@ const TimelineView = ({
       </div>
       
       {/* Date headers */}
-      <div className="flex border-b border-gray-200 pb-2">
+      <div className="flex border-b border-gray-200 pb-2 pl-4">
         {dates.map((date, index) => (
           <div
             key={date.toISOString()}
@@ -583,7 +608,7 @@ const TimelineView = ({
       </div>
       
       {/* Timeline grid with drop zone */}
-      <ScrollArea className="h-full overflow-auto">
+      <ScrollArea className="h-[400px]">
         <div 
           ref={timelineRef}
           className={cn(
