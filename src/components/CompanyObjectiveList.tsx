@@ -1,4 +1,3 @@
-
 import React from "react";
 import { CompanyObjective, CompanyKeyResult } from "@/types";
 import { Card, CardContent } from "./ui/card";
@@ -36,10 +35,12 @@ const CompanyObjectiveList = ({
     
     const updatedObjectives = objectives.map(obj => {
       if (obj.id === keyResult.objectiveId) {
-        const updatedKeyResults = obj.keyResults.map(kr => 
-          kr.id === keyResult.id ? { ...kr, title: newTitle } : kr
-        );
-        return { ...obj, keyResults: updatedKeyResults };
+        return {
+          ...obj,
+          keyResults: obj.keyResults.map(kr => 
+            kr.id === keyResult.id ? { ...kr, title: newTitle } : kr
+          )
+        };
       }
       return obj;
     });
@@ -78,11 +79,9 @@ const CompanyObjectiveList = ({
           return obj;
         }
         
-        const updatedKeyResults = obj.keyResults.filter(kr => kr.id !== keyResult.id);
-        
-        return { 
-          ...obj, 
-          keyResults: updatedKeyResults
+        return {
+          ...obj,
+          keyResults: obj.keyResults.filter(kr => kr.id !== keyResult.id)
         };
       }
       return obj;
