@@ -34,7 +34,7 @@ const ProgressBar = ({
   const getColorStyle = () => {
     if (color) return { backgroundColor: color };
     
-    if (variant === "primary") return { backgroundColor: 'hsl(var(--primary))' };
+    if (variant === "primary") return { backgroundColor: '#4B48FF' };
     
     const defaultColors = {
       low: '#f87171',

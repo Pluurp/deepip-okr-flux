@@ -5,7 +5,7 @@ export const departments: Department[] = [
   {
     id: "leadership",
     name: "Leadership & Strategy",
-    color: "#9b87f5", // Purple 🔮
+    color: "#4B48FF", // Changed to blue 🔵
   },
   {
     id: "product",
@@ -20,12 +20,12 @@ export const departments: Department[] = [
   {
     id: "sales",
     name: "Sales & Customer Success",
-    color: "#FFB30F", // Darker yellow for better visibility 🟡
+    color: "#FFB30F", // Yellow 🟡
   },
   {
     id: "growth",
     name: "Growth & Marketing",
-    color: "#45B36B", // Darker green for better visibility 🟢
+    color: "#45B36B", // Green 🟢
   },
 ];
 

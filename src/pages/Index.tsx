@@ -5,7 +5,7 @@ import { departments, getDepartmentColor } from "@/data/departments";
 import DepartmentCard from "@/components/DepartmentCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, CheckCircle, AlertTriangle, XCircle, Calendar } from "lucide-react";
+import { ArrowRight, CheckCircle, AlertTriangle, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useOKR } from "@/context/OKRContext";
 import ReadOnlyCompanyObjectiveList from "@/components/ReadOnlyCompanyObjectiveList";
@@ -155,57 +155,51 @@ const Index = () => {
                 </div>
               </div>
               
-              {/* Key Statistics Section */}
+              {/* Key Statistics Section - Updated to match reference image */}
               <div>
                 <h3 className="text-lg font-semibold mb-4">Key Statistics</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <Card className="bg-gray-50 border border-gray-100 shadow-none">
+                  <Card className="border shadow-none">
                     <CardContent className="p-4">
                       <div className="text-gray-600 mb-1">Total Objectives</div>
                       <div className="text-3xl font-bold">{statusStats.totalCount}</div>
                     </CardContent>
                   </Card>
                   
-                  <Card className="bg-green-50 border border-green-100 shadow-none">
-                    <CardContent className="p-4 flex justify-between items-center">
-                      <div>
-                        <div className="flex items-center gap-1 text-green-700">
-                          <CheckCircle size={16} />
-                          <span>On Track</span>
-                        </div>
-                        <div className="text-3xl font-bold text-green-700">{statusStats.onTrackPercent}%</div>
+                  <Card className="border shadow-none">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-1 text-gray-600 mb-1">
+                        <CheckCircle size={16} className="text-green-600" />
+                        <span>On Track</span>
                       </div>
+                      <div className="text-3xl font-bold text-green-600">{statusStats.onTrackPercent}%</div>
                     </CardContent>
                   </Card>
                   
-                  <Card className="bg-yellow-50 border border-yellow-100 shadow-none">
-                    <CardContent className="p-4 flex justify-between items-center">
-                      <div>
-                        <div className="flex items-center gap-1 text-yellow-700">
-                          <AlertTriangle size={16} />
-                          <span>At Risk</span>
-                        </div>
-                        <div className="text-3xl font-bold text-yellow-700">{statusStats.atRiskPercent}%</div>
+                  <Card className="border shadow-none">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-1 text-gray-600 mb-1">
+                        <AlertTriangle size={16} className="text-yellow-600" />
+                        <span>At Risk</span>
                       </div>
+                      <div className="text-3xl font-bold text-yellow-600">{statusStats.atRiskPercent}%</div>
                     </CardContent>
                   </Card>
                   
-                  <Card className="bg-red-50 border border-red-100 shadow-none">
-                    <CardContent className="p-4 flex justify-between items-center">
-                      <div>
-                        <div className="flex items-center gap-1 text-red-700">
-                          <XCircle size={16} />
-                          <span>Off Track</span>
-                        </div>
-                        <div className="text-3xl font-bold text-red-700">{statusStats.offTrackPercent}%</div>
+                  <Card className="border shadow-none">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-1 text-gray-600 mb-1">
+                        <XCircle size={16} className="text-red-600" />
+                        <span>Off Track</span>
                       </div>
+                      <div className="text-3xl font-bold text-red-600">{statusStats.offTrackPercent}%</div>
                     </CardContent>
                   </Card>
                 </div>
               </div>
             </div>
                 
-            {/* Company Objectives Section (Read-Only) */}
+            {/* Company Objectives Section with Blue Banner */}
             <div className="mb-6">
               <div className="flex justify-between items-center mb-4">
                 <h3 className="text-lg font-semibold text-deepip-primary">Company Objectives & Key Results</h3>

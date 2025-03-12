@@ -32,6 +32,7 @@ const ReadOnlyCompanyObjectiveList = ({ objectives, className }: ReadOnlyCompany
             key={objective.id} 
             className="overflow-hidden border shadow-sm transition-all duration-300 hover:shadow-md hover:-translate-y-1 hover:border-deepip-primary"
           >
+            <div className="h-1.5 bg-deepip-primary"></div>
             <CardContent className="p-5">
               <h3 className="text-lg font-medium mb-3 text-deepip-primary">{objective.title}</h3>
               

@@ -145,4 +145,9 @@
   .Card:hover {
     background-color: var(--hover-bg, rgba(75, 72, 255, 0.05));
   }
+  
+  /* Company Objectives section styling */
+  .company-objectives-header {
+    @apply bg-deepip-primary text-white py-3 px-4 rounded-t-md;
+  }
 }
