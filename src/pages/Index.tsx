@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { departments } from "@/data/departments";
@@ -28,16 +27,11 @@ const Index = () => {
     updateObjectives,
   } = useOKR();
   
-  // Add state for company objectives (read-only)
   const [companyObjectives, setCompanyObjectives] = useState<CompanyObjective[]>([]);
   
-  // Force a refresh when the component mounts to ensure latest data
   useEffect(() => {
     document.title = "OKR Dashboard | DeepIP";
-    // Ensure we have the latest stats on initial render
     refreshStats();
-    
-    // Load company objectives
     setCompanyObjectives(loadCompanyObjectives());
   }, [refreshStats]);
   
@@ -49,27 +43,20 @@ const Index = () => {
     }
   };
   
-  // Handle department objective updates
   const handleAddDepartmentObjective = (departmentId: DepartmentId) => {
-    // Create new objective with global dates and cycle
     const newObjective = createNewObjective(departmentId);
-    
-    // Override with global dates and cycle
     newObjective.startDate = globalStartDate;
     newObjective.endDate = globalEndDate;
     newObjective.cycle = cycle;
     
-    // Get current objectives for this department
     const currentObjectives = allDepartmentObjectives[departmentId] || [];
     const updatedObjectives = [...currentObjectives, newObjective];
     
-    // Update objectives in context
     updateObjectives(departmentId, updatedObjectives);
     
     toast.success(`New objective added to ${departmentId}`);
   };
   
-  // Use useMemo to calculate derived stats to prevent recalculation on every render
   const { 
     objectives,
     overallProgress,
@@ -78,7 +65,6 @@ const Index = () => {
     statusCounts,
     totalObjectives
   } = useMemo(() => {
-    // Get all objectives from all departments using context instead of static data
     const departmentObjectives = {
       leadership: allDepartmentObjectives.leadership || [],
       product: allDepartmentObjectives.product || [],
@@ -87,28 +73,22 @@ const Index = () => {
       growth: allDepartmentObjectives.growth || [],
     };
     
-    // Flatten all objectives for calculations
     const allObjectives = Object.values(departmentObjectives).flat();
     
-    // Calculate overall company progress from all objectives
     const calculatedOverallProgress = allObjectives.length > 0
       ? Math.round(allObjectives.reduce((sum, obj) => sum + obj.progress, 0) / allObjectives.length)
       : 0;
     
-    // Calculate average time progress across departments
     const calculatedAvgTimeProgress = Object.values(contextStats).reduce((sum, stat) => sum + stat.timeProgress, 0) / 
       Object.values(contextStats).length;
     
-    // Use the first department's days remaining (they should all be the same with global dates)
     const calculatedFirstDeptStats = Object.values(contextStats)[0] || { daysRemaining: 0, totalDays: 0 };
 
-    // Calculate status counts for all key results
     let onTrackCount = 0;
     let atRiskCount = 0;
     let offTrackCount = 0;
     let totalCount = 0;
 
-    // Process all key results to count statuses
     allObjectives.forEach(obj => {
       obj.keyResults.forEach(kr => {
         totalCount++;
@@ -122,7 +102,6 @@ const Index = () => {
       });
     });
 
-    // Calculate percentages, avoid division by zero
     const onTrackPercentage = totalCount > 0 ? Math.round((onTrackCount / totalCount) * 100) : 0;
     const atRiskPercentage = totalCount > 0 ? Math.round((atRiskCount / totalCount) * 100) : 0;
     const offTrackPercentage = totalCount > 0 ? Math.round((offTrackCount / totalCount) * 100) : 0;
@@ -188,7 +167,6 @@ const Index = () => {
           </CardContent>
         </Card>
 
-        {/* Company OKRs Section (Read-Only) */}
         <Card className="mb-6 overflow-hidden border-0 shadow-sm">
           <div className="h-1.5 bg-deepip-primary"></div>
           <CardContent className="p-6">
@@ -284,37 +262,34 @@ const Index = () => {
               
               <div>
                 <h3 className="font-medium mb-5">Key Statistics</h3>
-                <div className="grid grid-cols-2 gap-y-6 gap-x-4">
-                  <div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="p-4 rounded-lg border">
                     <p className="text-sm text-gray-500">Total Objectives</p>
                     <p className="text-2xl font-medium">{totalObjectives}</p>
                   </div>
-                  <div className="flex items-center">
-                    <div className="mr-2">
+                  
+                  <div className="p-4 rounded-lg border">
+                    <div className="flex items-center gap-2">
                       <StatusIcon status="On track" size={20} />
-                    </div>
-                    <div>
                       <p className="text-sm text-gray-500">On Track</p>
-                      <p className="text-2xl font-medium text-green-600">{statusCounts.onTrack}%</p>
                     </div>
+                    <p className="text-2xl font-medium text-green-600">{statusCounts.onTrack}%</p>
                   </div>
-                  <div className="flex items-center">
-                    <div className="mr-2">
+                  
+                  <div className="p-4 rounded-lg border">
+                    <div className="flex items-center gap-2">
                       <StatusIcon status="At Risk" size={20} />
-                    </div>
-                    <div>
                       <p className="text-sm text-gray-500">At Risk</p>
-                      <p className="text-2xl font-medium text-yellow-600">{statusCounts.atRisk}%</p>
                     </div>
+                    <p className="text-2xl font-medium text-yellow-600">{statusCounts.atRisk}%</p>
                   </div>
-                  <div className="flex items-center">
-                    <div className="mr-2">
+                  
+                  <div className="p-4 rounded-lg border">
+                    <div className="flex items-center gap-2">
                       <StatusIcon status="Off Track" size={20} />
-                    </div>
-                    <div>
                       <p className="text-sm text-gray-500">Off Track</p>
-                      <p className="text-2xl font-medium text-red-600">{statusCounts.offTrack}%</p>
                     </div>
+                    <p className="text-2xl font-medium text-red-600">{statusCounts.offTrack}%</p>
                   </div>
                 </div>
               </div>
