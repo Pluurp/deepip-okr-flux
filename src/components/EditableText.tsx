@@ -55,13 +55,13 @@ const EditableText = ({ value, onChange, className, placeholder = 'Click to edit
       onBlur={handleBlur}
       onKeyDown={handleKeyDown}
       className={cn(
-        "px-2 py-1 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-deepip-primary transition-colors duration-200",
+        "font-inter px-2 py-1 w-full border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-1 focus:ring-deepip-primary transition-colors duration-200",
         className
       )}
     />
   ) : (
     <div 
-      className={cn("px-2 py-1 cursor-pointer hover:bg-deepip-light-gray/50 rounded-md transition-colors", className)}
+      className={cn("font-inter px-2 py-1 cursor-pointer hover:bg-deepip-light-gray/50 rounded-md transition-colors", className)}
       onDoubleClick={handleDoubleClick}
     >
       {value || <span className="text-gray-400">{placeholder}</span>}
