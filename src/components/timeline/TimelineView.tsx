@@ -449,7 +449,7 @@ const TimelineView = ({
       return "100%";
     }
     
-    return `${dayIndex * getDayWidth()}px`;
+    return dayIndex * getDayWidth() + "px";
   };
 
   const getItemWidth = (startDate: Date, endDate: Date): string => {
@@ -485,7 +485,7 @@ const TimelineView = ({
     }
     
     const daysVisible = endIndex - startIndex + 1;
-    return `${daysVisible * getDayWidth()}px`;
+    return daysVisible * getDayWidth() + "px";
   };
 
   const isItemVisible = (startDate: Date, endDate: Date): boolean => {
@@ -534,7 +534,7 @@ const TimelineView = ({
               "flex-shrink-0 text-xs text-center font-medium",
               date.getDay() === 0 || date.getDay() === 6 ? "text-gray-400" : "text-gray-600"
             )}
-            style={{ width: `${dayWidth}px` }}
+            style={{ width: dayWidth + "px" }}
           >
             {formatDate(date)}
           </div>
@@ -551,7 +551,7 @@ const TimelineView = ({
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleTimelineItemDrop}
-          style={{ width: `${dates.length * dayWidth}px` }}
+          style={{ width: dates.length * dayWidth + "px" }}
         >
           {dates.map((date, index) => (
             <div
@@ -561,8 +561,8 @@ const TimelineView = ({
                 date.getDay() === 0 || date.getDay() === 6 ? "bg-gray-50" : ""
               )}
               style={{ 
-                left: `${index * dayWidth}px`,
-                width: `${dayWidth}px`
+                left: index * dayWidth + "px",
+                width: dayWidth + "px"
               }}
             />
           ))}
@@ -572,7 +572,7 @@ const TimelineView = ({
               className="absolute top-0 bottom-0 bg-primary/20 border-l-2 border-r-2 border-primary"
               style={{ 
                 left: getItemLeftPosition(dropDate),
-                width: `${dayWidth}px`
+                width: dayWidth + "px"
               }}
             />
           )}
@@ -592,7 +592,7 @@ const TimelineView = ({
                 style={{ 
                   left: getItemLeftPosition(item.startDate),
                   width: getItemWidth(item.startDate, item.endDate),
-                  top: `${Math.random() * 60 + 10}px`,
+                  top: Math.random() * 60 + 10 + "px",
                   backgroundColor: getDepartmentColor(keyResult.objectiveId),
                   opacity: resizingItem === item.keyResultId ? 0.8 : 0.9
                 }}
