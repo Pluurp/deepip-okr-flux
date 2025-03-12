@@ -9,6 +9,7 @@ type ProgressBarProps = {
   variant?: "primary" | "default";
   showLabel?: boolean;
   animate?: boolean;
+  color?: string;
 };
 
 const ProgressBar = ({
@@ -17,26 +18,33 @@ const ProgressBar = ({
   size = "md",
   variant = "default",
   showLabel = false,
-  animate = false, // Default to no animation
+  animate = false,
+  color,
 }: ProgressBarProps) => {
   const barRef = useRef<HTMLDivElement>(null);
   
-  // Use useEffect to update the width directly, bypassing React's transition animations
   useEffect(() => {
     if (barRef.current) {
-      // Apply width directly to the DOM without any transitions
       barRef.current.style.transition = "none";
       barRef.current.style.width = `${value}%`;
     }
   }, [value]);
 
-  // Calculate color based on value
-  const getColorClass = () => {
-    if (variant === "primary") return "bg-deepip-primary";
+  // Calculate color based on value and variant/custom color
+  const getColorStyle = () => {
+    if (color) return { backgroundColor: color };
     
-    if (value < 30) return "bg-red-400";
-    if (value < 70) return "bg-yellow-400";
-    return "bg-green-400";
+    if (variant === "primary") return { backgroundColor: 'hsl(var(--primary))' };
+    
+    const defaultColors = {
+      low: '#f87171',
+      medium: '#facc15',
+      high: '#4ade80'
+    };
+
+    if (value < 30) return { backgroundColor: defaultColors.low };
+    if (value < 70) return { backgroundColor: defaultColors.medium };
+    return { backgroundColor: defaultColors.high };
   };
 
   // Calculate height based on size
@@ -67,14 +75,14 @@ const ProgressBar = ({
         <div
           ref={barRef}
           className={cn(
-            getColorClass(),
             getHeightClass(),
-            "transition-none", // Always disable transitions
+            "transition-none",
             "rounded-full"
           )}
           style={{
             width: `${value}%`,
-            transition: "none" // Force no transitions at the style level
+            transition: "none",
+            ...getColorStyle()
           }}
         />
       </div>

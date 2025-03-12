@@ -1,7 +1,7 @@
 
 import React, { useEffect } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { departments } from "@/data/departments";
+import { departments, getDepartmentColor } from "@/data/departments";
 import DepartmentCard from "@/components/DepartmentCard";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,7 +69,6 @@ const Index = () => {
               {departments.map((department) => {
                 const objectives = objectivesLookup[department.id as keyof typeof objectivesLookup] || [];
                 
-                // Get objectives formatted for the card
                 const objectivesForCard = objectives.map(obj => ({
                   title: obj.title,
                   progress: obj.progress

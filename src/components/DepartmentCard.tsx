@@ -75,9 +75,9 @@ const DepartmentCard = ({
           <div className="relative mb-2">
             <ProgressBar 
               value={stats.overallProgress} 
-              variant="primary"
               className="mb-6"
               animate={false}
+              color={department.color}
             />
           </div>
           
