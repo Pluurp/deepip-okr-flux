@@ -15,7 +15,7 @@ const Logo = ({ className }: LogoProps) => {
         height="40" 
         className="transition-transform duration-300 ease-in-out transform group-hover:rotate-6"
       />
-      <span className="text-xl font-bold text-deepip-primary">PRIOR LABS</span>
+      <span className="text-xl font-bold text-black">PRIOR LABS</span>
     </div>
   );
 };

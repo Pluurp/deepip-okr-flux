@@ -1,3 +1,4 @@
+
 import { useEffect, useMemo } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { departments } from "@/data/departments";
@@ -29,7 +30,7 @@ const Index = () => {
   } = useOKR();
   
   useEffect(() => {
-    document.title = "OKR Dashboard | DeepIP";
+    document.title = "OKR Dashboard | Prior Labs";
     refreshStats();
   }, [refreshStats]);
   
