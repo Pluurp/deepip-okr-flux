@@ -2,35 +2,31 @@
 import { useEffect, useMemo } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { departments } from "@/data/departments";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import DepartmentCard from "@/components/DepartmentCard";
-import { Badge } from "@/components/ui/badge";
-import { format, parseISO } from "date-fns";
-import { PieChart, Pie, Cell, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip } from "recharts";
-import CompanyObjectiveList from "@/components/CompanyObjectiveList";
-import ReadOnlyCompanyObjectiveList from "@/components/ReadOnlyCompanyObjectiveList";
-import {
-  Calendar,
-  Clock,
-  Target,
-  TrendingUp,
-  Users,
-  Smile,
-  CheckCircle2,
-  AlertTriangle,
-  XCircle,
-} from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Calendar, Plus, ArrowRight } from "lucide-react";
+import { format } from "date-fns";
 import { useOKR } from "@/context/OKRContext";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import ObjectiveList from "@/components/ObjectiveList";
+import { Objective, CompanyObjective, DepartmentId } from "@/types";
+import { createNewObjective } from "@/utils/okrUtils";
+import { loadCompanyObjectives } from "@/utils/companyOkrUtils";
+import { toast } from "sonner";
+import StatusIcon from "@/components/StatusIcon";
+import ReadOnlyCompanyObjectiveList from "@/components/ReadOnlyCompanyObjectiveList";
+import { useQuery } from "@tanstack/react-query";
 
 const Index = () => {
-  const {
-    companyObjectives,
-    companyKeyResults,
-    companyStats,
-    departmentStats,
+  const { 
+    globalStartDate, 
+    globalEndDate, 
+    departmentStats: contextStats,
+    cycle,
+    objectives: allDepartmentObjectives,
     refreshStats,
+    updateObjectives,
   } = useOKR();
   
   useEffect(() => {
@@ -38,244 +34,269 @@ const Index = () => {
     refreshStats();
   }, [refreshStats]);
   
-  const totalProgress = useMemo(() => {
-    return companyStats.averageProgress || 0;
-  }, [companyStats]);
-
-  const statusData = useMemo(() => {
-    return [
-      { name: "On Track", value: companyStats.onTrackCount || 0, color: "#10B981" },
-      { name: "At Risk", value: companyStats.atRiskCount || 0, color: "#F59E0B" },
-      { name: "Off Track", value: companyStats.offTrackCount || 0, color: "#EF4444" },
-    ];
-  }, [companyStats]);
-
-  const departmentData = useMemo(() => {
-    return Object.entries(departmentStats).map(([id, stats]) => {
-      const dept = departments.find((d) => d.id === id);
-      return {
-        name: dept?.name || id,
-        progress: stats.averageProgress || 0,
-        color: dept?.color || "#6366F1",
-      };
-    });
-  }, [departmentStats]);
-
-  const COLORS = ["#10B981", "#F59E0B", "#EF4444"];
-
-  const formatTooltipValue = (value: number) => {
-    return `${value.toFixed(0)}%`;
+  const formatDate = (date: Date) => {
+    return format(date, "MMMM d, yyyy");
   };
+  
+  const handleAddDepartmentObjective = (departmentId: DepartmentId) => {
+    const newObjective = createNewObjective(departmentId);
+    newObjective.startDate = globalStartDate;
+    newObjective.endDate = globalEndDate;
+    newObjective.cycle = cycle;
+    
+    const currentObjectives = allDepartmentObjectives[departmentId] || [];
+    const updatedObjectives = [...currentObjectives, newObjective];
+    
+    updateObjectives(departmentId, updatedObjectives);
+    
+    toast.success(`New objective added to ${departmentId}`);
+  };
+  
+  const { 
+    objectives,
+    overallProgress,
+    avgTimeProgress,
+    firstDeptStats,
+    statusCounts,
+    totalObjectives
+  } = useMemo(() => {
+    const departmentObjectives = {
+      leadership: allDepartmentObjectives.leadership || [],
+      product: allDepartmentObjectives.product || [],
+      ai: allDepartmentObjectives.ai || [],
+      sales: allDepartmentObjectives.sales || [],
+      growth: allDepartmentObjectives.growth || [],
+    };
+    
+    const allObjectives = Object.values(departmentObjectives).flat();
+    
+    const calculatedOverallProgress = allObjectives.length > 0
+      ? Math.round(allObjectives.reduce((sum, obj) => sum + obj.progress, 0) / allObjectives.length)
+      : 0;
+    
+    const calculatedAvgTimeProgress = Object.values(contextStats).reduce((sum, stat) => sum + stat.timeProgress, 0) / 
+      Object.values(contextStats).length;
+    
+    const calculatedFirstDeptStats = Object.values(contextStats)[0] || { daysRemaining: 0, totalDays: 0 };
 
-  const currentQuarter = useMemo(() => {
-    const now = new Date();
-    const month = now.getMonth();
-    const year = now.getFullYear();
-    const quarter = Math.floor(month / 3) + 1;
-    return `Q${quarter} ${year}`;
-  }, []);
+    let onTrackCount = 0;
+    let atRiskCount = 0;
+    let offTrackCount = 0;
+    let totalCount = 0;
+
+    allObjectives.forEach(obj => {
+      obj.keyResults.forEach(kr => {
+        totalCount++;
+        if (kr.status === "On track" || kr.status === "Completed") {
+          onTrackCount++;
+        } else if (kr.status === "At Risk") {
+          atRiskCount++;
+        } else if (kr.status === "Off Track") {
+          offTrackCount++;
+        }
+      });
+    });
+
+    const onTrackPercentage = totalCount > 0 ? Math.round((onTrackCount / totalCount) * 100) : 0;
+    const atRiskPercentage = totalCount > 0 ? Math.round((atRiskCount / totalCount) * 100) : 0;
+    const offTrackPercentage = totalCount > 0 ? Math.round((offTrackCount / totalCount) * 100) : 0;
+    
+    return {
+      objectives: departmentObjectives,
+      overallProgress: calculatedOverallProgress,
+      avgTimeProgress: calculatedAvgTimeProgress,
+      firstDeptStats: calculatedFirstDeptStats,
+      statusCounts: {
+        onTrack: onTrackPercentage,
+        atRisk: atRiskPercentage,
+        offTrack: offTrackPercentage
+      },
+      totalObjectives: allObjectives.length
+    };
+  }, [allDepartmentObjectives, contextStats]);
+
+  const { data: companyObjectives } = useQuery({
+    queryKey: ['company-objectives'],
+    queryFn: loadCompanyObjectives,
+    initialData: []
+  });
 
   return (
     <DashboardLayout>
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
+      <div className="animate-fade-in">
+        <div className="flex justify-between items-center mb-6">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Company OKR overview for {currentQuarter}
-            </p>
+            <h1 className="text-3xl font-bold tracking-tight">OKR Dashboard</h1>
+            <p className="text-gray-500 mt-1">Track objectives and key results across departments</p>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Calendar size={14} />
-              {format(new Date(), "MMMM d, yyyy")}
-            </Badge>
-            <Badge variant="outline" className="flex items-center gap-1">
-              <Clock size={14} />
-              {format(new Date(), "h:mm a")}
-            </Badge>
-          </div>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Company Progress
-              </CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{totalProgress.toFixed(0)}%</div>
-              <Progress value={totalProgress} className="mt-2" />
-              <p className="text-xs text-muted-foreground mt-2">
-                Overall progress across all objectives
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Objectives</CardTitle>
-              <Target className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{companyObjectives.length}</div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Total company objectives being tracked
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Key Results
-              </CardTitle>
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{companyKeyResults.length}</div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Total key results across all objectives
-              </p>
-            </CardContent>
-          </Card>
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Departments</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{departments.length}</div>
-              <p className="text-xs text-muted-foreground mt-2">
-                Active departments with OKRs
-              </p>
-            </CardContent>
+          
+          <Card className="p-2 px-4 bg-white shadow-sm border">
+            <span className="text-sm font-medium text-deepip-primary">{cycle} 2025</span>
           </Card>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-7">
-          <Card className="col-span-4">
-            <CardHeader>
-              <CardTitle>Department Progress</CardTitle>
-              <CardDescription>
-                Progress breakdown by department
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={departmentData}
-                    layout="vertical"
-                    margin={{ top: 5, right: 30, left: 40, bottom: 5 }}
-                  >
-                    <XAxis type="number" domain={[0, 100]} />
-                    <YAxis
-                      type="category"
-                      dataKey="name"
-                      width={100}
-                      tick={{ fontSize: 12 }}
-                    />
-                    <Tooltip formatter={formatTooltipValue} />
-                    <Bar dataKey="progress" radius={[4, 4, 4, 4]}>
-                      {departmentData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+        <Card className="mb-6 overflow-hidden border-0 shadow-sm">
+          <CardContent className="p-6">
+            <div className="grid md:grid-cols-3 gap-6 mb-4">
+              <div className="space-y-1">
+                <p className="text-sm text-gray-500">Cycle</p>
+                <p className="font-medium">{cycle} 2025</p>
               </div>
-            </CardContent>
-          </Card>
-          <Card className="col-span-3">
-            <CardHeader>
-              <CardTitle>Status Breakdown</CardTitle>
-              <CardDescription>
-                Objective status distribution
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="flex justify-center">
-              <div className="h-[300px] w-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={statusData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={60}
-                      outerRadius={80}
-                      paddingAngle={5}
-                      dataKey="value"
-                      label={({ name, percent }) =>
-                        `${name}: ${(percent * 100).toFixed(0)}%`
-                      }
-                      labelLine={false}
-                    >
-                      {statusData.map((entry, index) => (
-                        <Cell
-                          key={`cell-${index}`}
-                          fill={COLORS[index % COLORS.length]}
-                        />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => [value, "Objectives"]} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="mt-4 flex flex-col space-y-2">
-                <div className="flex items-center">
-                  <div className="mr-2 h-3 w-3 rounded-full bg-emerald-500" />
-                  <span className="text-sm">
-                    On Track ({companyStats.onTrackCount || 0})
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <div className="mr-2 h-3 w-3 rounded-full bg-amber-500" />
-                  <span className="text-sm">
-                    At Risk ({companyStats.atRiskCount || 0})
-                  </span>
-                </div>
-                <div className="flex items-center">
-                  <div className="mr-2 h-3 w-3 rounded-full bg-red-500" />
-                  <span className="text-sm">
-                    Off Track ({companyStats.offTrackCount || 0})
-                  </span>
+              <div className="space-y-1">
+                <p className="text-sm text-gray-500">Start Date</p>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <p className="font-medium">{formatDate(globalStartDate)}</p>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList>
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="details">Objective Details</TabsTrigger>
-          </TabsList>
-          <TabsContent value="overview" className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-              {departments.map((department) => (
-                <DepartmentCard
-                  key={department.id}
-                  department={department}
-                  stats={departmentStats[department.id] || {}}
-                />
-              ))}
+              <div className="space-y-1">
+                <p className="text-sm text-gray-500">End Date</p>
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4 text-gray-500" />
+                  <p className="font-medium">{formatDate(globalEndDate)}</p>
+                </div>
+              </div>
             </div>
-          </TabsContent>
-          <TabsContent value="details">
-            <Card>
-              <CardHeader>
-                <CardTitle>Company Objectives</CardTitle>
-                <CardDescription>
-                  All company-level objectives and their progress
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ReadOnlyCompanyObjectiveList />
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+            
+            <div className="mt-4 flex justify-end">
+              <Link to="/settings">
+                <Button variant="outline" size="sm">
+                  Manage Settings
+                </Button>
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="mb-6 overflow-hidden border-0 shadow-sm">
+          <div className="h-1.5 bg-deepip-primary"></div>
+          <CardContent className="p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-deepip-primary">Company Objectives & Key Results</h2>
+              <Link to="/company">
+                <Button 
+                  variant="outline"
+                  size="sm" 
+                  className="flex items-center gap-1"
+                >
+                  Manage Company OKRs
+                  <ArrowRight size={16} />
+                </Button>
+              </Link>
+            </div>
+            
+            <ReadOnlyCompanyObjectiveList objectives={companyObjectives} />
+          </CardContent>
+        </Card>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+          {departments.map((department) => {
+            const deptObjectives = objectives[department.id] || [];
+            const objectivesSummary = deptObjectives.map((obj) => ({
+              title: obj.title,
+              progress: obj.progress,
+            }));
+
+            return (
+              <DepartmentCard
+                key={department.id}
+                department={department}
+                stats={contextStats[department.id]}
+                objectives={objectivesSummary}
+                onAddObjective={() => handleAddDepartmentObjective(department.id)}
+              />
+            );
+          })}
+        </div>
+
+        <Card className="mt-10 animate-slide-in">
+          <CardContent className="p-6">
+            <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between mb-6">
+              <div>
+                <h2 className="text-2xl font-bold">Company Overview</h2>
+                <p className="text-gray-500">Overall progress across all departments</p>
+              </div>
+              
+              <div className="flex gap-6 mt-4 lg:mt-0">
+                <div className="text-center">
+                  <p className="text-sm text-gray-500">Days Remaining</p>
+                  <p className="text-xl font-medium">{firstDeptStats.daysRemaining}/{firstDeptStats.totalDays}</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-500">Time Progress</p>
+                  <p className="text-xl font-medium">{avgTimeProgress.toFixed(1)}%</p>
+                </div>
+                <div className="text-center">
+                  <p className="text-sm text-gray-500">Progress</p>
+                  <p className="text-xl font-medium">{overallProgress}%</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="mt-6 grid md:grid-cols-2 gap-8">
+              <div>
+                <h3 className="font-medium mb-5">Department Progress</h3>
+                <div className="space-y-4">
+                  {departments.map((dept) => (
+                    <div key={dept.id} className="flex items-center">
+                      <div className="w-32 font-medium truncate" style={{ color: dept.color }}>
+                        {dept.name}
+                      </div>
+                      <div className="flex-1 ml-4">
+                        <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full rounded-full transition-none"
+                            style={{ 
+                              width: `${contextStats[dept.id].overallProgress}%`,
+                              backgroundColor: dept.color
+                            }}
+                          />
+                        </div>
+                      </div>
+                      <div className="ml-4 w-12 text-right font-medium">
+                        {contextStats[dept.id].overallProgress}%
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-medium mb-5">Key Statistics</h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="p-4 rounded-lg border">
+                    <p className="text-sm text-gray-500">Total Objectives</p>
+                    <p className="text-2xl font-medium">{totalObjectives}</p>
+                  </div>
+                  
+                  <div className="p-4 rounded-lg border">
+                    <div className="flex items-center gap-2">
+                      <StatusIcon status="On track" size={20} />
+                      <p className="text-sm text-gray-500">On Track</p>
+                    </div>
+                    <p className="text-2xl font-medium text-green-600">{statusCounts.onTrack}%</p>
+                  </div>
+                  
+                  <div className="p-4 rounded-lg border">
+                    <div className="flex items-center gap-2">
+                      <StatusIcon status="At Risk" size={20} />
+                      <p className="text-sm text-gray-500">At Risk</p>
+                    </div>
+                    <p className="text-2xl font-medium text-yellow-600">{statusCounts.atRisk}%</p>
+                  </div>
+                  
+                  <div className="p-4 rounded-lg border">
+                    <div className="flex items-center gap-2">
+                      <StatusIcon status="Off Track" size={20} />
+                      <p className="text-sm text-gray-500">Off Track</p>
+                    </div>
+                    <p className="text-2xl font-medium text-red-600">{statusCounts.offTrack}%</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </DashboardLayout>
   );
