@@ -15,7 +15,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
       </main>
       <footer className="py-4 border-t bg-white">
         <div className="container mx-auto px-4 text-center text-sm text-deepip-gray">
-          <p>© {new Date().getFullYear()} DeepIP. All rights reserved.</p>
+          <p>© {new Date().getFullYear()} Prior Labs. All rights reserved.</p>
         </div>
       </footer>
     </div>
