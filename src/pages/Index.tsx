@@ -1,4 +1,3 @@
-
 import { useEffect, useMemo } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { departments } from "@/data/departments";
@@ -34,12 +33,8 @@ const Index = () => {
     refreshStats();
   }, [refreshStats]);
   
-  const formatDate = (dateString: string) => {
-    try {
-      return format(new Date(dateString), "MMMM d, yyyy");
-    } catch (e) {
-      return "Invalid date";
-    }
+  const formatDate = (date: Date) => {
+    return format(date, "MMMM d, yyyy");
   };
   
   const handleAddDepartmentObjective = (departmentId: DepartmentId) => {

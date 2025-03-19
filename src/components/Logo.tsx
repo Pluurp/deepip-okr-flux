@@ -9,13 +9,13 @@ const Logo = ({ className }: LogoProps) => {
   return (
     <div className={cn("flex items-center gap-2", className)}>
       <img 
-        src="/lovable-uploads/00ac3caa-0c36-4e61-9c69-ad4ae95223ff.png" 
-        alt="DeepIP Logo" 
+        src="/lovable-uploads/04f0f225-3594-4337-972a-5b5c9a55a699.png" 
+        alt="PRIOR LABS Logo" 
         width="40" 
         height="40" 
         className="transition-transform duration-300 ease-in-out transform group-hover:rotate-6"
       />
-      <span className="text-xl font-bold text-deepip-primary">DeepIP</span>
+      <span className="text-xl font-bold text-deepip-primary">PRIOR LABS</span>
     </div>
   );
 };
